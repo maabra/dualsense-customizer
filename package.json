@@ -1,0 +1,21 @@
+{
+  "name": "dualsense-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "prepare-models": "python scripts/prepare_models.py"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "three": "^0.180.0",
+    "vite": "^7.3.7"
+  },
+  "dependencies": {
+    "vue": "^3.5.44"
+  }
+}
