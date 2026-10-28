@@ -74,6 +74,9 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
  # resolution. Scale calibration as well as the image; never enlarge old paths.
  high=root/'assets/references/hires'/Path(filename).name
  factor=1
+ if key=='gt':
+  factor=3840/1800
+  filename=str(root/'assets/references/hires/gt-front.png');cx*=factor;cy*=factor;scale*=factor
  if key.removesuffix('-pad') in ['marathon','lisa','deathstranding','yotei-black','camo'] and high.exists():
   factor=2.4
   filename=str(high);cx*=2.4;cy*=2.4;scale*=2.4
@@ -228,8 +231,11 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
  elif mode=='godofwar':
   add((hsv[:,:,0]>100)&(hsv[:,:,0]<132)&(hsv[:,:,1]>65)&(hsv[:,:,2]>45),'#35447c')
  elif mode=='gt':
-  add(gray<115,'#25292b')
-  add((hsv[:,:,0]<12)&(hsv[:,:,1]>100)&(hsv[:,:,2]>90),'#b92f43')
+  # The 4K reference retains the small baseline text. Local contrast recovers
+  # antialiased strokes that the old hard 115 threshold cut into fragments.
+  local=cv2.GaussianBlur(gray,(0,0),5*factor).astype(float)-gray.astype(float)
+  add((gray<135)|((gray<190)&(local>25)),'#25292b')
+  add(((hsv[:,:,0]<12)|(hsv[:,:,0]>170))&(hsv[:,:,1]>100)&(hsv[:,:,2]>90),'#b92f43')
   add((hsv[:,:,0]>95)&(hsv[:,:,0]<125)&(hsv[:,:,1]>95)&(hsv[:,:,2]>80),'#3678b7')
  elif mode=='gta-rear-logo':
   delta=cv2.GaussianBlur(gray,(0,0),12).astype(float)-gray.astype(float)
@@ -327,3 +333,5 @@ if astro is not None:
  for edition in ['astro','astro-joyful']:result[edition]=[{'color':'#1260cf','paths':paths}]
 (root/'src/catalog-traces.json').write_text(json.dumps(result,separators=(',',':')),encoding='utf-8')
 print('Extracted',len(result),'reference layouts')
+import runpy
+runpy.run_path(str(root/'scripts/register-shell-artwork.py'),run_name='__main__')

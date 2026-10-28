@@ -58,12 +58,22 @@ function isFactoryControlContour(points) {
 }
 
 export function drawTracedArtwork(ctx,id,group,w,h) {
- const key=group==='rear'?id+'-rear':group==='touchpad'&&traces[id+'-pad']?id+'-pad':id;
+ const key=group==='rear'?id+'-rear':group==='touchpad'&&traces[id+'-pad']?id+'-pad':group==='shell'&&traces[id+'-shell']?id+'-shell':id;
  if(!traces[key]||!['shell','touchpad','rear'].includes(group))return false;
  const registration=traces[key].source?traces[key]:null;
  const layers=registration?traces[registration.source]:traces[key];
  const registered=point=>{
   if(!registration)return point;
+  if(registration.landmarks){
+   const [x,y]=point,{landmarks,weights}=registration,n=landmarks.length;
+   let dx=weights[n][0]+x*weights[n+1][0]+y*weights[n+2][0];
+   let dy=weights[n][1]+x*weights[n+1][1]+y*weights[n+2][1];
+   for(let i=0;i<n;i++){
+    const r2=(x-landmarks[i][0])**2+(y-landmarks[i][1])**2;
+    const k=.5*r2*Math.log(Math.max(r2,1e-20));dx+=k*weights[i][0];dy+=k*weights[i][1];
+   }
+   return [x+dx,y+dy];
+  }
   const [x,y]=point,m=registration.transform,z=m[2][0]*x+m[2][1]*y+m[2][2];
   return [(m[0][0]*x+m[0][1]*y+m[0][2])/z,(m[1][0]*x+m[1][1]*y+m[1][2])/z];
  };

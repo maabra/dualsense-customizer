@@ -113,7 +113,7 @@ function createStudio(container, report) {
     const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
       const detail=quality!=='low'&&mobile?quality+'-mobile':quality;
-      const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail):createControlCanvas(entry.hex,part,group,detail);
+      const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail,renderer.capabilities.maxTextureSize):createControlCanvas(entry.hex,part,group,detail);
       if(!canvas){artworkCache.set(key,null);return null;}
       if(group==='buttons'){
         // The symbol is printed on its own insert layer. Keep the underlying
@@ -405,7 +405,7 @@ function createStudio(container, report) {
       }
       m.needsUpdate = true;
     });
-    // Keep only textures referenced by the current mix: 3K canvases are expensive
+    // Keep only textures referenced by the current mix: high-resolution maps are expensive
     // on mobile, and switching editions must not retain every previous set.
     const used=new Set();model?.traverse(obj=>{if(obj.isMesh)used.add(obj.material.userData.artwork?.value);});
     for(const [key,texture] of artworkCache)if(!used.has(texture)){disposeBakedArtwork(texture);artworkCache.delete(key);}

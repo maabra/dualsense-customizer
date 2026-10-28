@@ -103,7 +103,7 @@ export function createControlCanvas(hex,part,group,detail='low') {
   return canvas;
 }
 
-export function createEditionCanvas(id,part,group,detail='low') {
+export function createEditionCanvas(id,part,group,detail='low',maxTextureSize=8192) {
   if(!recreatedEditions.has(id)||!['shell','rear','touchpad','trim','buttons','dpad','ps'].includes(group))return null;
   // Controls use local UVs; all shell and trim halves share a continuous front layout.
   const touch=group==='touchpad',button=group==='buttons'||group==='dpad'||part==='ps';
@@ -113,7 +113,13 @@ export function createEditionCanvas(id,part,group,detail='low') {
     canvas.width=button?(mobile?512:1024):(mobile?2048:4096);
     canvas.height=button?canvas.width:Math.round(canvas.width*(touch?552/1024:998/1536));
   }
-  const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+  // Rasterize vectors at twice the linear density, not an enlarged bitmap.
+  // Keep authoring coordinates stable: strokes and micro-patterns must not
+  // change physical size when the texture quality changes.
+  const w=canvas.width,h=canvas.height;
+  const density=Math.min(2,maxTextureSize/w,maxTextureSize/h);
+  canvas.width=Math.round(w*density);canvas.height=Math.round(h*density);
+  const ctx=canvas.getContext('2d');ctx.scale(density,density);
   const metal=id==='wolverine-metal',wolverine=id.startsWith('wolverine');
   let base='#b5b5ae';
   if(wolverine)base=group==='trim'?(metal?'#b6b9bd':'#f5c72d'):neutral;
