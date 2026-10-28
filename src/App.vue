@@ -259,4 +259,10 @@ header{height:78px;padding:0 36px;background:#080d15}.header-caption{font-size:9
 @media(max-height:540px) and (min-width:761px) and (max-width:1100px){header{height:52px}main{height:calc(100svh - 52px);min-height:0;grid-template-columns:minmax(0,1fr) 330px}.panel-heading{padding:13px 18px}.panel-heading h2{font-size:21px}.studio-nav button{padding:10px 0;font-size:10px}.panel-scroll{padding:16px 18px}.panel-footer{padding:9px 18px}.panel-footer .done-button{padding:8px 20px}.intro h1{font-size:28px}.zoom-controls{right:14px}.zoom-controls button{width:27px;height:27px}.zoom-controls .fit-view{height:29px}.view-controls{bottom:12px}}
 
 @media(max-width:760px){body.sheet-expanded #stage{height:32%}}
+/* Scale menu layout as a unit on wide displays, including icons and hit areas. */
+@media(min-width:1500px){
+ main{grid-template-columns:minmax(0,1fr) 660px}
+ #panel{zoom:1.5;min-height:0}
+ .model-dialog{zoom:1.5;max-height:calc((100svh - 48px)/1.5)}
+}
 </style>
