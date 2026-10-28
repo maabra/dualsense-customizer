@@ -4,11 +4,12 @@ An interactive 3D playground for mixing DualSense controller parts, colors, and 
 
 ## Features
 
-- Orbit, zoom, and switch between front, rear, and perspective views.
+- Left-drag to orbit, right-drag to move, and scroll to zoom. Touch controls support one-finger rotation and two-finger movement and zoom. Camera presets recenter the view.
 - Basic controls for whole groups, or Advanced controls for 25 individual pieces: front and rear shell halves, center trim halves, touchpad, four face buttons, four D-pad directions, two thumbsticks, L1/R1 bumpers, L2/R2 triggers, Create, Options, PS, and mute buttons.
 - Independent colors, finishes, and texture imports for each piece.
 - Standard-color and limited-edition palettes, custom colors, and randomized combinations.
-- Lightweight model loaded first, with an optional high-detail model and 4K textures.
+- Startup model chooser recommending the source Original model, alongside separate High Definition and Low Definition GLB options.
+- Studio softbox reflections, area lighting, calibrated material finishes, and real cast shadows on both models.
 - Responsive desktop layout and expandable mobile customization panel.
 - Automatically saved color and finish selections, shareable build links, JSON export, and PNG snapshots.
 
@@ -38,11 +39,15 @@ npm run build
 npm run preview
 ```
 
-The default model is approximately 7.2 MB. Enabling high detail downloads approximately 50.1 MB; the larger model is not downloaded automatically on mobile.
+Original is converted directly from `assets/original/source/model/model.dae` and its matching textures, retaining source geometry and packing the original material channels for the browser (approximately 51.9 MB). High Definition is the previous detailed GLB (50.1 MB), and Low Definition is the lightweight GLB (7.2 MB). No model downloads until a visitor makes a selection. Models can be changed later without losing customization settings.
 
 ## Deployment
 
-The included GitHub Actions workflow builds and deploys `dist/` to GitHub Pages on pushes to `main`, or through a manual workflow run. Repositories using this workflow must select **GitHub Actions** as their Pages deployment source.
+Production output is written to `docs/` and included in the repository. With branch-based GitHub Pages, the repository-root entry redirects to `docs/`, so visitors receive the compiled app rather than Vue source. Directly serving `docs/` also works. Vite removes the redirect from development and production app HTML to avoid redirect loops.
+
+The included GitHub Actions workflow builds and deploys `docs/` to GitHub Pages on pushes to `main`, or through a manual workflow run. Repositories using this workflow must select **GitHub Actions** as their Pages deployment source.
+
+The HTML includes its own dark startup and failure screen, independent of the JavaScript bundle. A standalone dark 404 page is included as well.
 
 Vite's relative asset base supports repository Pages paths and custom domains. No backend, API keys, or database are required.
 
@@ -63,7 +68,10 @@ Prepared models are included so production builds do not require Python. After c
 
 ```sh
 python scripts/prepare_models.py
+python scripts/prepare_original.py
 ```
+
+The original-model conversion requires Python's Pillow package. Its image processing only packs source material channels and converts texture orientation; it does not synthesize artwork.
 
 Older shared builds using grouped selections are migrated to the individual-part format when opened.
 

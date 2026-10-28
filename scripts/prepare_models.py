@@ -102,5 +102,6 @@ def prepare(filename, output):
         f.write(struct.pack('<II',len(binary),0x004e4942)); f.write(binary)
     print(f'{output}: {len(materials)} part materials, {path.stat().st_size:,} bytes')
 
-prepare('playstation_5_dualsense_low.glb', 'dualsense-low.glb')
-prepare('playstation_5_dualsense.glb', 'dualsense-high.glb')
+if __name__ == '__main__':
+    prepare('playstation_5_dualsense_low.glb', 'dualsense-low.glb')
+    prepare('playstation_5_dualsense.glb', 'dualsense-high.glb')

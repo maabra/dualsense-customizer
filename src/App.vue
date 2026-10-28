@@ -1,16 +1,23 @@
 <template>
 
- <header><a class="brand" href="./" aria-label="DualSense Studio home"><span class="brand-icon">✳</span> DUALSENSE<span class="brand-light">STUDIO</span></a><span class="header-caption">AN UNOFFICIAL PLAYGROUND</span><button id="share" @click="share" class="outline">↗ <span>Share build</span></button></header>
+ <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DUALSENSE<span class="brand-light">STUDIO</span></a><span class="header-caption">AN UNOFFICIAL PLAYGROUND</span><button id="share" @click="share" class="outline">↗ <span>Share build</span></button></header>
+ <dialog ref="modelDialog" class="model-dialog" aria-labelledby="model-title" @cancel="!studioReady && $event.preventDefault()">
+  <form @submit.prevent="startModel">
+   <StudioLogo /><h2 id="model-title">Choose your model</h2><p class="model-intro">The same studio. Your level of detail.</p>
+   <label v-for="model in modelOptions" :key="model.id" class="model-option" :class="{selected:chosenModel===model.id}"><input type="radio" v-model="chosenModel" :value="model.id" name="model"><span><strong>{{model.name}} <small v-if="model.id==='original'">RECOMMENDED</small></strong><span>{{model.description}}</span><em>{{model.size}}</em></span></label>
+   <p class="model-hint">Every model supports all customizable parts. You can switch at any time.</p>
+   <button class="model-start" type="submit" autofocus>Open studio <span>↗</span></button>
+  </form>
+ </dialog>
  <main>
   <section id="stage" aria-label="Interactive 3D controller preview">
    <div class="intro"><p class="eyebrow"><span class="dot"></span> YOUR CONTROLLER. YOUR RULES.</p><h1>Made to play.<br><em>Built by you.</em></h1><p class="intro-copy">Iconic parts. Unexpected combinations.<br>A DualSense that’s entirely yours.</p></div>
    <div id="canvas-wrap" ref="canvasWrap"></div>
    <div id="loading" role="status" v-if="loading"><span class="spinner"></span><span id="loading-text">{{loadingLabel}}</span></div>
    <div v-if="fatalError" class="model-error" role="alert">{{fatalError}} <button class="outline" @click="retry">Try again</button></div>
-   <div class="stage-label"><span id="build-name">{{ buildName }}</span><span id="model-status">3D STUDIO / {{ quality === 'high' ? 'HIGH DETAIL' : 'LOW POLY' }}</span></div>
+   <div class="stage-label"><button id="model-status" :disabled="loading" @click="openModelChooser">{{ studioReady ? activeModel.name : 'Choose a model' }} <span>↗</span></button></div>
    <div class="view-controls" aria-label="Camera controls"><button v-for="v in views" :key="v[0]" :class="{active: activeView===v[0]}" @click="setView(v[0])">{{v[1]}}</button><span></span><button id="rotate" :aria-pressed="rotating" :class="{active:rotating}" @click="toggleRotate" title="Auto rotate">⟳</button><button id="capture" @click="capture" title="Download preview image">↓ PNG</button></div>
-   <p class="gesture">↔ Drag to orbit <span>·</span> Scroll or pinch to zoom</p>
-   <div class="stage-index">01 <span>/ INFINITE POSSIBILITIES</span></div>
+   <p class="gesture"><span class="desktop-gesture">Left drag to rotate · Right drag to move · Scroll to zoom</span><span class="mobile-gesture">Drag to rotate · Two fingers to move and zoom</span></p>
   </section>
   <aside id="panel" aria-label="Controller customization">
    <button id="sheet-toggle" aria-label="Expand or collapse customization panel" :aria-expanded="expanded" @click="!suppressClick && (expanded = !expanded)" @touchstart="sheetTouchStart" @touchend="sheetTouchEnd"><span></span><span class="sheet-label">Customize your controller <b>⌄</b></span></button>
@@ -30,7 +37,7 @@
     <div id="selection-info"><p v-if="mixed" class="mixed-note">These pieces have different settings. Choosing a finish or palette here applies it to the whole group.</p><strong>{{ mixed ? 'Mixed selections' : currentEntry?.name || 'Custom color' }} <span v-if="hasUpload">· Imported texture</span></strong><p v-if="currentEntry?.type==='edition'">Palette approximation only. Edition graphics and colored button symbols require authentic textures.</p></div>
     <div class="finish-row"><label for="finish">Surface finish</label><select id="finish" :value="mixedFinish ? 'mixed' : current.finish" @change="setFinish($event.target.value)"><option v-if="mixedFinish" value="mixed" disabled>Mixed</option><option value="original">Original</option><option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option><option value="gloss">Gloss</option></select></div>
     <div class="section-top model-top"><span class="step">03</span><h3>The finer details</h3></div>
-    <div class="setting"><div><b>High detail model</b><p>Upgrade geometry · 48 MB download</p></div><button class="switch" id="quality" role="switch" :aria-checked="quality==='high'" :disabled="loading || !!fatalError" @click="toggleQuality" aria-label="High detail model"></button></div>
+    <div class="setting"><div><b>Controller model</b><p>{{activeModel.name}}</p></div><button class="outline" id="quality" :disabled="loading || !!fatalError" @click="openModelChooser">Change</button></div>
     <div class="setting"><div><b>Light bar</b><p>A little signature glow</p></div><input type="color" id="light-color" v-model="light" aria-label="Light bar color"></div>
     <details class="build-details"><summary>Your combination <span>＋</span></summary><div id="build-list"><div v-for="p in advancedParts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">↓ Export build JSON</button></details>
     <p class="asset-note">Edition colors are approximations. Authentic artwork needs UV-matched textures. <a href="./ASSETS.md" target="_blank">Asset guide ↗</a></p>
@@ -47,11 +54,21 @@
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
 import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
 import { createStudio } from './renderer';
+import StudioLogo from './StudioLogo.vue';
 
 const STORAGE = 'dualsense-studio-v1';
 const build = reactive(defaults());
 const selectedPart = ref('shell'), tab = ref('standard'), search = ref('');
-const light = ref('#91aaff'), quality = ref('low'), loading = ref(true), loadingLabel = ref('Loading lightweight model…');
+const modelOptions = [
+  {id:'original',name:'Original',description:'The supplied Collada model with its original 4K textures.',size:'52 MB download · source geometry and original materials'},
+  {id:'high',name:'High Definition',description:'The previous detailed GLB model with 4K textures.',size:'50 MB download'},
+  {id:'low',name:'Low Definition',description:'The lightweight GLB model with 1K textures.',size:'7 MB download · faster on mobile'},
+];
+const light = ref('#91aaff'), quality = ref('original'), loading = ref(false), loadingLabel = ref('Loading original model…');
+const activeModel=computed(()=>modelOptions.find(model=>model.id===quality.value));
+const chosenModel = ref('original'), modelDialog = ref(null), studioReady = ref(false);
+function openModelChooser() {chosenModel.value=quality.value;modelDialog.value?.showModal();}
+function startModel() {modelDialog.value?.close();studio?.load(chosenModel.value);}
 const expanded = ref(false), rotating = ref(false), activeView = ref('angle'), toastText = ref(''), fatalError = ref('');
 const canvasWrap = ref(null), uploaded = reactive({});
 const views = [['front','Front'],['back','Back'],['angle','Perspective']];
@@ -77,11 +94,6 @@ const currentEntry = computed(()=>byId[current.value.id]);
 const partName = computed(()=>[...parts,...advancedParts].find(p=>p[0]===selectedPart.value)[1]);
 const standardColors = catalog.filter(c=>c.type==='standard');
 const editions = computed(()=>catalog.filter(c=>c.type==='edition' && c.name.toLowerCase().includes(search.value.toLowerCase())));
-const buildName = computed(()=> {
-  const ids = new Set(advancedParts.map(([p])=>build[p].id));
-  const original = defaults();
-  return advancedParts.every(([p])=>JSON.stringify(build[p])===JSON.stringify(original[p])) ? 'Classic White' : ids.size===1 ? byId[build['shell-left'].id]?.name || 'Custom build' : 'Your signature mix';
-});
 let studio, toastTimer, touchY = 0, suppressClick = false;
 function notify(message) {toastText.value=message;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastText.value='',3500);}
 function snapshot() {return {version:2,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
@@ -137,7 +149,6 @@ async function uploadTexture(event) {
   event.target.value='';
 }
 function clearTexture() {clearSelectedUploads();}
-function toggleQuality() {studio?.load(quality.value==='low'?'high':'low');}
 function sheetTouchStart(event) {touchY=event.changedTouches[0].clientY;}
 function sheetTouchEnd(event) {
   const delta=event.changedTouches[0].clientY-touchY;
@@ -145,14 +156,14 @@ function sheetTouchEnd(event) {
 }
 function report(status) {
   if(status.loading!==undefined) loading.value=status.loading;
-  if(status.loading) loadingLabel.value=status.level==='high'?'Loading high detail model…':'Loading lightweight model…';
-  if(status.progress!==undefined) loadingLabel.value=`Loading ${status.level==='high'?'high detail':'lightweight'} model · ${status.progress}%`;
+  const name=modelOptions.find(model=>model.id===status.level)?.name || 'controller';
+  if(status.loading) loadingLabel.value=`Loading ${name}…`;
+  if(status.progress!==undefined) loadingLabel.value=`Loading ${name} · ${status.progress}%`;
   if(status.quality) quality.value=status.quality;
-  if(status.error) {if(!studioReady)fatalError.value=status.error;else notify(status.error);}
-  else if(status.loading===false) {fatalError.value='';studioReady=true;}
+  if(status.error) {if(!studioReady.value)fatalError.value=status.error;else notify(status.error);}
+  else if(status.loading===false) {fatalError.value='';studioReady.value=true;}
 }
-let studioReady=false;
-function retry() {fatalError.value='';studio?.load('low');}
+function retry() {fatalError.value='';studio?.load(chosenModel.value);}
 watch([build,light],()=> {
   studio?.apply(build,light.value);
   try {localStorage.setItem(STORAGE,JSON.stringify(snapshot()));}catch{}
@@ -165,7 +176,7 @@ function loadHash() {
 onMounted(()=> {
   if(!loadHash()) {try {restore(JSON.parse(localStorage.getItem(STORAGE)));}catch{}}
   window.addEventListener('hashchange',loadHash);
-  try {studio=createStudio(canvasWrap.value,report);studio.apply(build,light.value);studio.load('low');}
+  try {studio=createStudio(canvasWrap.value,report);studio.apply(build,light.value);modelDialog.value?.showModal();}
   catch(error) {loading.value=false;fatalError.value='Your browser could not start the 3D preview. Enable WebGL or try a different browser.';console.error(error);}
 });
 onBeforeUnmount(()=> {studio?.dispose();clearTimeout(toastTimer);window.removeEventListener('hashchange',loadHash);document.body.classList.remove('sheet-expanded');});
