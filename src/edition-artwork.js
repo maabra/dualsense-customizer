@@ -67,6 +67,42 @@ function faceSymbol(ctx,part,color,w,h) {
   else if(part==='button-cross'){line(ctx,[[cx-r*.72,cy-r*.72],[cx+r*.72,cy+r*.72]],color,w*.045);line(ctx,[[cx+r*.72,cy-r*.72],[cx-r*.72,cy+r*.72]],color,w*.045);}
 }
 
+function standardInk(hex){
+ const rgb=hex.slice(1).match(/../g).map(value=>parseInt(value,16)/255);
+ return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>.55?'#858c98':'#bec5cf';
+}
+function faceInk(id,part){
+ if(id==='anniversary')return {'button-triangle':'#45b8a5','button-circle':'#e86b74','button-cross':'#76a3df','button-square':'#d48fba'}[part];
+ if(id.startsWith('wolverine'))return id==='wolverine-metal'?'#b4b4b5':'#e1b62c';
+ if(id.startsWith('astro'))return '#94c6dd';
+ if(id.startsWith('gta'))return id==='gta-white'?'#b18baa':'#b47d9f';
+ if(id==='genshin')return '#b79e6c';
+ if(id==='monsterhunter')return '#d7c9d1';
+ if(id==='gow20')return '#ad2334';
+ if(id==='iconblue')return '#b8e6fa';
+ if(id==='yotei-gold')return '#b49a52';
+ if(id==='spiderman')return '#6c747f';
+ return additionalEditions.has(id)?(['lisa','marathon','yotei-black','gta-white'].includes(id)?'#747a83':'#74767e'):'#d8dce0';
+}
+export function createButtonSymbolCanvas(entry,part,detail='low'){
+ const canvas=document.createElement('canvas');canvas.width=canvas.height=detail==='low'||detail.endsWith('-mobile')?512:1024;
+ faceSymbol(canvas.getContext('2d'),part,recreatedEditions.has(entry.id)?faceInk(entry.id,part):standardInk(entry.hex),canvas.width,canvas.height);
+ return canvas;
+}
+
+export function createControlCanvas(hex,part,group,detail='low') {
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=detail==='low'||detail.endsWith('-mobile')?512:1024;
+  const ctx=canvas.getContext('2d'),w=canvas.width;
+  ctx.fillStyle=hex;ctx.fillRect(0,0,w,w);
+  const ink=standardInk(hex);
+  if(group==='buttons')faceSymbol(ctx,part,ink,w,w);
+  else{
+    ctx.translate(w/2,w/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);ctx.scale(w/256,w/256);
+    polygon(ctx,[[-18,-7],[18,-7],[0,-25]],ink);
+  }
+  return canvas;
+}
+
 export function createEditionCanvas(id,part,group,detail='low') {
   if(!recreatedEditions.has(id)||!['shell','rear','touchpad','trim','buttons','dpad','ps'].includes(group))return null;
   // Controls use local UVs; all shell and trim halves share a continuous front layout.
@@ -89,15 +125,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(additionalEditions.has(id))base=catalogPartColor(id,group,part);
   ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
   if(group==='buttons') {
-    let ink=wolverine?(metal?'#b4b4b5':'#e1b62c'):id.startsWith('astro')?'#94c6dd':id==='spiderman'?'#6c747f':additionalEditions.has(id)?(['lisa','marathon','yotei-black','yotei-gold','gta-white'].includes(id)?'#747a83':'#74767e'):'#d8dce0';
-    if(id==='anniversary')ink={'button-triangle':'#45b8a5','button-circle':'#e86b74','button-cross':'#76a3df','button-square':'#d48fba'}[part];
-    if(id.startsWith('gta'))ink=id==='gta-white'?'#b18baa':'#b47d9f';
-    if(id==='yotei-gold')ink='#b49a52';
-    if(id==='genshin')ink='#b79e6c';
-    if(id==='monsterhunter')ink='#d7c9d1';
-    if(id==='gow20')ink='#ad2334';
-    if(id==='iconblue')ink='#b8e6fa';
-    faceSymbol(ctx,part,ink,w,h);return canvas;
+    faceSymbol(ctx,part,faceInk(id,part),w,h);return canvas;
   }
   if(group==='dpad') {
     if(wolverine) {

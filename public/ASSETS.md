@@ -26,7 +26,9 @@ All material and relief depths are visual estimates from references, not measure
 
 ## Resolution and memory
 
-Desktop Original/High artwork uses 4096-pixel body/touchpad masters and 1024-pixel controls. Mobile uses 2048-pixel body/touchpad masters and 512-pixel controls; Low Definition uses 2048-pixel body masters and 1536-pixel touchpads. Finish-data maps use up to 1024 pixels and relief maps up to 2048 pixels. Original embedded normal maps remain as supplied. Maximum supported anisotropic filtering is used for oblique views. Color, finish and relief render targets are released when no longer used.
+Desktop Original/High artwork uses 4096-pixel body/touchpad masters and 1024-pixel controls. Mobile uses 2048-pixel body/touchpad masters and 512-pixel controls; Low Definition uses 2048-pixel body masters and 1536-pixel touchpads. Desktop finish-data maps use up to 2048 pixels to retain thin metallic etching; mobile and Low use up to 1024 pixels. Relief maps use up to 2048 pixels. Original embedded normal maps remain as supplied. Maximum supported anisotropic filtering is used for oblique views. Color, finish and relief render targets are released when no longer used.
+
+Face buttons use the supplied cap and insert surfaces, with a separate printed-symbol plane inside the cap so symbols remain legible across the three model UV layouts. The cap has a smooth, nonmetallic, refractive clear-polymer material; its parameters are visual estimates rather than a measured material specification. The D-pad remains opaque. Mobile refraction renders at a lower intermediate resolution to reduce GPU cost. Gold-ink finishes are assigned independently for FF XVI, Hogwarts, Yōtei Gold and Genshin; LISA's pale metallic details and Helldivers' touchpad dot pattern are reference-derived.
 
 SVG paths can rasterize sharply at higher resolution, but vectorization cannot recover unseen photographic detail. Micro-embossing not present in the base model, exact transparent Adamantium windows/internal components, ink thickness, unreadable regulatory labels and edition-specific physical geometry are not claimed as reconstructed.
 

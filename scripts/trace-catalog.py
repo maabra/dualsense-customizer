@@ -182,8 +182,11 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   region=np.zeros(gray.shape,np.uint8)
   cv2.fillPoly(region,[np.int32([[1015,245],[1110,238],[1448,238],[1543,245],[1620,430],[1640,700],[1570,795],[1510,780],[1420,590],[1150,590],[1065,780],[990,795],[935,700],[950,430]])],1)
   yellow=(hsv[:,:,0]>18)&(hsv[:,:,0]<40)&(hsv[:,:,1]>90)&(hsv[:,:,2]>90)
-  add(yellow&(region>0),'#cbb12d')
   delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),6).astype(float)
+  perforation=np.zeros(gray.shape,np.uint8)
+  cv2.fillPoly(perforation,[np.int32([[1125,255],[1430,255],[1404,363],[1150,363]])],1)
+  add((delta<-4)&(gray<70)&(perforation>0),'#17191c')
+  add(yellow&(region>0),'#cbb12d')
   add((gray>85)&(hsv[:,:,1]<65)&(delta>8)&(region>0),'#92999c')
   # Preserve wear cutouts within yellow paint rather than inventing scratches.
   for c in cv2.findContours(yellow.astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]:
@@ -281,6 +284,11 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   gray=cv2.bilateralFilter(gray,7,24,5)
   for lo,hi,color in [(0,53,'#35343a'),(53,80,'#4d4c54'),(80,105,'#62626a'),(105,140,'#77777c')]:add((gray>=lo)&(gray<hi),color)
  else:
+  if key.removesuffix('-pad')=='lisa':
+   yy,xx=np.indices(gray.shape)
+   grip=(abs(xx-cx)>scale*.5)&(abs(xx-cx)<scale*.94)&(yy>cy-scale*.14)&(yy<cy+scale*.66)
+   delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),8*factor).astype(float)
+   add((gray>110)&(gray<220)&(hsv[:,:,1]<50)&(delta<-5)&grip,'#aeb0a5')
   add(gray<105,'#24262a')
   if key.removesuffix('-pad')=='marathon':add((hsv[:,:,0]>26)&(hsv[:,:,0]<48)&(hsv[:,:,1]>105)&(hsv[:,:,2]>95),'#b6ec24')
   if key.removesuffix('-pad')=='lisa':add((hsv[:,:,0]>80)&(hsv[:,:,0]<112)&(hsv[:,:,1]>70)&(hsv[:,:,2]>80),'#69c8e2')

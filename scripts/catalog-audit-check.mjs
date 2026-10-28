@@ -13,6 +13,11 @@ try{
   await page.getByRole('button',{name:'Front',exact:true}).click();await page.waitForTimeout(650);
   const id=await page.evaluate(()=>JSON.parse(localStorage.getItem('dualsense-studio-v1')).parts['shell-left'].id);
   await page.locator('#canvas-wrap canvas').screenshot({path:`artifacts/audit-${id}-front.png`});
+  if(process.env.AUDIT_MACRO&&id==='ff16'){
+   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+   await page.locator('#canvas-wrap canvas').screenshot({path:'artifacts/physical-button-closeup.png'});
+   await page.getByRole('button',{name:'Reset view',exact:true}).click();await page.waitForTimeout(700);
+  }
   if(id.startsWith('gta')||['godofwar','concord','yotei-gold','genshin','monsterhunter','gow20','iconblue','lastofus'].includes(id)){
    await page.getByRole('button',{name:'Perspective',exact:true}).click();await page.waitForTimeout(700);await page.locator('#canvas-wrap canvas').screenshot({path:`artifacts/audit-${id}-angle.png`});
    await page.getByRole('button',{name:'Rear',exact:true}).click();await page.waitForTimeout(700);await page.locator('#canvas-wrap canvas').screenshot({path:`artifacts/audit-${id}-rear.png`});

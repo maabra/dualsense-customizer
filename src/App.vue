@@ -9,10 +9,9 @@
    <button class="model-start" type="submit" autofocus>Continue <span aria-hidden="true">→</span></button>
   </form>
  </dialog>
- <main>
+ <main :style="drawerStyle">
   <section id="stage" aria-label="Interactive 3D controller preview">
-   <div class="intro" v-show="section==='customize' && !appearanceOpen && !inspecting"><p class="eyebrow">DUALSENSE WIRELESS CONTROLLER</p><h1>Your controller.<br>Your way.</h1><p class="intro-copy">Choose your parts, finish and player color.</p><div class="shapes" aria-hidden="true"><span>△</span><span>○</span><span>×</span><span>□</span></div></div>
-   <div id="canvas-wrap" ref="canvasWrap"></div>
+   <ControllerViewport ref="canvasWrap" @status="report" />
    <div id="loading" role="status" v-if="loading"><span class="spinner"></span><span id="loading-text">{{loadingLabel}}</span></div>
    <div v-if="fatalError" class="model-error" role="alert"><strong>Model unavailable</strong><p>{{fatalError}}</p><div class="model-error-actions"><button class="outline" @click="retry">Try again</button><button class="outline" @click="openModelChooser">Choose another model</button></div></div>
    <div class="stage-label"><button id="model-status" :disabled="loading" @click="openModelChooser">{{ studioReady ? activeModel.name : 'Choose a model' }} <span>↗</span></button></div>
@@ -20,8 +19,7 @@
    <div class="view-controls" aria-label="Camera controls"><button v-for="v in views" :key="v[0]" :class="{active: activeView===v[0]}" @click="setView(v[0])">{{v[1]}}</button><span></span><button id="rotate" :aria-pressed="rotating" :class="{active:rotating}" @click="toggleRotate" title="Auto rotate">⟳</button></div>
    <p class="gesture"><span class="desktop-gesture">Left drag to rotate · Right drag to move · Scroll to zoom</span><span class="mobile-gesture">Drag to rotate · Two fingers to move and zoom</span></p>
   </section>
-  <aside id="panel" aria-label="Controller customization">
-   <button id="sheet-toggle" aria-label="Expand or collapse customization panel" :aria-expanded="expanded" @click="!suppressClick && (expanded = !expanded)" @touchstart="sheetTouchStart" @touchend="sheetTouchEnd"><span></span><span class="sheet-label">Customize your controller <b>⌄</b></span></button>
+  <MobileDrawer v-model:expanded="expanded" @position="drawerPosition=$event">
    <div class="panel-navigation"><nav class="studio-nav" role="tablist" aria-label="Controller settings"><button v-for="item in sections" :key="item[0]" :id="'nav-'+item[0]" role="tab" :aria-selected="section===item[0]" :tabindex="section===item[0]?0:-1" :aria-controls="'section-'+item[0]" :class="{active:section===item[0]}" @click="selectSection(item[0])" @keydown="navKey($event,item[0])">{{item[1]}}</button></nav><button id="reset" @click="reset" class="icon-button" title="Reset build" aria-label="Reset build"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 1 1-.15 5M4 4v5h5" /></svg></button></div>
    <div class="panel-scroll" ref="panelScroll">
     <section id="section-customize" role="tabpanel" aria-labelledby="nav-customize" v-show="section==='customize'">
@@ -56,7 +54,7 @@
     </section><p class="asset-note">Unofficial controller configurator. <a href="./ASSETS.md" target="_blank">About the assets ↗</a> · <a href="./RIGHTS.md" target="_blank">Rights and testing notice ↗</a></p>
    </div>
    <div class="panel-footer"><button class="done-button" @click="finishEditing">Done</button><span class="instant-status"><span aria-hidden="true">✓</span> Changes apply instantly</span></div>
-  </aside>
+  </MobileDrawer>
  </main>
  <footer><span>AN INDEPENDENT CONTROLLER CONFIGURATOR</span><span>Unofficial fan project · <a href="https://sketchfab.com/3d-models/playstation-5-dualsense-878c1f882808477ab81c2fe86d5a3936" target="_blank" rel="noreferrer">3D model: AHarmlessPotato / CC BY 4.0 ↗</a></span></footer>
  <div id="toast" role="status" :class="{show:toastText}">{{toastText}}</div>
@@ -66,7 +64,8 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
-import { createStudio } from './renderer';
+import ControllerViewport from './ControllerViewport.vue';
+import MobileDrawer from './MobileDrawer.vue';
 import StudioLogo from './StudioLogo.vue';
 import PartIcon from './PartIcon.vue';
 
@@ -127,7 +126,9 @@ const currentEntry = computed(()=>byId[current.value.id]);
 const partName = computed(()=>selectedPart.value==='all'?'Whole controller':[...parts,...advancedParts].find(p=>p[0]===selectedPart.value)[1]);
 const standardColors = catalog.filter(c=>c.type==='standard');
 const editions = computed(()=>catalog.filter(c=>c.type==='edition' && c.name.toLowerCase().includes(search.value.toLowerCase())));
-let studio, toastTimer, touchY = 0, suppressClick = false;
+const drawerPosition=ref(null);
+const drawerStyle=computed(()=>drawerPosition.value?.mobile?{'--preview-height':drawerPosition.value.top+'px','--preview-transition':drawerPosition.value.dragging?'none':'height .3s ease'}:{});
+let studio, toastTimer;
 function notify(message) {toastText.value=message;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastText.value='',3500);}
 function snapshot() {return {version:2,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
 function restore(data) {
@@ -189,11 +190,6 @@ async function uploadTexture(event) {
   event.target.value='';
 }
 function clearTexture() {clearSelectedUploads();}
-function sheetTouchStart(event) {touchY=event.changedTouches[0].clientY;}
-function sheetTouchEnd(event) {
-  const delta=event.changedTouches[0].clientY-touchY;
-  if(Math.abs(delta)>20) {expanded.value=delta<0;suppressClick=true;setTimeout(()=>suppressClick=false,300);}
-}
 function report(status) {
   if(status.inspecting!==undefined)inspecting.value=status.inspecting;
   if(status.loading!==undefined) loading.value=status.loading;
@@ -218,10 +214,10 @@ function loadHash() {
 onMounted(()=> {
   if(!loadHash()) {try {restore(JSON.parse(localStorage.getItem(STORAGE)));}catch{}}
   window.addEventListener('hashchange',loadHash);
-  try {studio=createStudio(canvasWrap.value,report);studio.apply(build,light.value);modelDialog.value?.showModal();}
+  try {studio=canvasWrap.value.initialize();studio.apply(build,light.value);modelDialog.value?.showModal();}
   catch(error) {loading.value=false;fatalError.value='Your browser could not start the 3D preview. Enable WebGL or try a different browser.';console.error(error);}
 });
-onBeforeUnmount(()=> {studio?.dispose();clearTimeout(toastTimer);window.removeEventListener('hashchange',loadHash);document.body.classList.remove('sheet-expanded');});
+onBeforeUnmount(()=> {clearTimeout(toastTimer);window.removeEventListener('hashchange',loadHash);document.body.classList.remove('sheet-expanded');});
 </script>
 
 <style>
@@ -267,4 +263,7 @@ header{height:78px;padding:0 36px;background:#080d15}.header-caption{font-size:9
 .panel-navigation{display:flex;align-items:center;border-bottom:1px solid #2f3c50;flex-shrink:0}
 .panel-navigation .studio-nav{flex:1;min-width:0;border-bottom:0}
 .panel-navigation>#reset{flex-shrink:0;margin-right:16px}
+@media(max-width:760px){
+ #stage,body.sheet-expanded #stage{height:var(--preview-height,calc(100% - 100px));transition:var(--preview-transition,height .3s ease)}
+}
 </style>

@@ -1,3 +1,7 @@
+<template><div id="canvas-wrap" ref="container"></div></template>
+
+<script setup>
+import {ref,onBeforeUnmount} from 'vue';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -7,14 +11,24 @@ import { transferProgress } from './loading';
 import {createSurfaceCanvas} from './surface-artwork';
 import {createNativeUvBaker,disposeBakedArtwork} from './native-uv-baker';
 import {createEditionReliefCanvas} from './catalog-artwork';
-import { createEditionCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
+import { createEditionCanvas, createControlCanvas, createButtonSymbolCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
-export function createStudio(container, report) {
+const container=ref(null),emit=defineEmits(['status']);
+let api;
+function initialize(){
+  if(!api)api=createStudio(container.value,status=>emit('status',status));
+  return api;
+}
+defineExpose({initialize});
+onBeforeUnmount(()=>api?.dispose());
+
+function createStudio(container, report) {
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(33, 1, .01, 100);
   camera.position.set(0, .55, 4.9);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.transmissionResolutionScale=matchMedia('(max-width:760px)').matches ? .5 : 1;
   renderer.setClearColor(0, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -35,7 +49,7 @@ export function createStudio(container, report) {
   controls.zoomToCursor = true;
   controls.autoRotateSpeed = .7;
   controls.target.set(0, -.05, 0);
-  let inspecting=false;
+  let inspecting=false,needsRender=true;
   controls.addEventListener('change',()=>{
     const distance=camera.position.distanceTo(controls.target),next=distance<3.6||distance>6.5;
     if(next!==inspecting){inspecting=next;report({inspecting});}
@@ -92,14 +106,20 @@ export function createStudio(container, report) {
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
   const artworkCache=new Map();
-  let uvBaker;
+  let uvBaker,buttonLabels=new Map();
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
   function artworkFor(entry,part,group) {
-    if(entry?.artwork!=='recreated')return null;
+    if(!entry||entry.artwork!=='recreated'&&!['buttons','dpad'].includes(group))return null;
     const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
-      const canvas=createEditionCanvas(entry.id,part,group,quality!=='low'&&mobile?quality+'-mobile':quality);
+      const detail=quality!=='low'&&mobile?quality+'-mobile':quality;
+      const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail):createControlCanvas(entry.hex,part,group,detail);
       if(!canvas){artworkCache.set(key,null);return null;}
+      if(group==='buttons'){
+        // The symbol is printed on its own insert layer. Keep the underlying
+        // molded core plain so refraction cannot reveal a second copy.
+        const ctx=canvas.getContext('2d');ctx.fillStyle=editionPartColor(entry,part,group)||paletteColor(entry,part);ctx.fillRect(0,0,canvas.width,canvas.height);
+      }
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       const surface=new THREE.CanvasTexture(createSurfaceCanvas(canvas,entry.id,group));surface.colorSpace=THREE.NoColorSpace;surface.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.userData.surface=surface;
       const reliefCanvas=createEditionReliefCanvas(canvas,entry.id,group);
@@ -117,9 +137,13 @@ export function createStudio(container, report) {
   const viewport = new ResizeObserver(() => {
     const w = container.clientWidth, h = container.clientHeight;
     renderer.setSize(w,h); camera.aspect = w / Math.max(h,1);
-    // Leave breathing room for the headline and the lower camera toolbar.
-    camera.setViewOffset(w,h,0,-h * (w < 600 ? .075 : .085),w,h);
+    // Keep the full controller in a tall portrait preview without changing
+    // the user's zoom distance as the drawer resizes it.
+    camera.fov=Math.min(75,THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(33)/2)/Math.min(camera.aspect,1))));
+    renderer.transmissionResolutionScale=w<600 ? .5 : 1;
+    camera.clearViewOffset();
     camera.updateProjectionMatrix();
+    needsRender=true;
   });
   viewport.observe(container);
 
@@ -146,7 +170,10 @@ export function createStudio(container, report) {
       next.traverse(obj => {
         if(!obj.isMesh) return;
         const material = new THREE.MeshPhysicalMaterial();
-        THREE.MeshStandardMaterial.prototype.copy.call(material,obj.material);obj.material = material;
+        THREE.MeshStandardMaterial.prototype.copy.call(material,obj.material);
+        // StandardMaterial.copy resets defines. Restore PHYSICAL so clear
+        // polymer transmission and IOR use the full physical shader.
+        material.defines={STANDARD:'',PHYSICAL:''};obj.material = material;
         obj.castShadow=true;obj.receiveShadow=true;
         material.userData.originalRoughness=material.roughness;
         material.userData.originalMetalness=material.metalness;
@@ -201,6 +228,7 @@ export function createStudio(container, report) {
           shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
             #include <map_fragment>
+            ${['buttons','dpad'].includes(group)?'diffuseColor.a=1.0;':''}
             float detail = 0.72 + 0.28 * dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
             diffuseColor.rgb = mix(diffuseColor.rgb, studioTint * detail, studioBlend);
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
@@ -251,9 +279,37 @@ export function createStudio(container, report) {
           `);
         };
       });
+      // Each supplied face button has an outer clear cap and an insert below.
+      // A small printed-symbol layer sits between them, independent of their
+      // differing UV charts in the three supplied model variants.
+      const buttonLayers=new Map();
+      next.traverse(obj=>{
+        if(!obj.isMesh||parentPart(obj.material.name)!=='buttons')return;
+        const index=obj.geometry.index,p=obj.geometry.attributes.position;
+        let z=0;const count=index?.count||p.count;
+        for(let i=0;i<count;i++)z+=p.getZ(index?index.getX(i):i);
+        const layers=buttonLayers.get(obj.material.name)||[];
+        layers.push({obj,z:z/count});buttonLayers.set(obj.material.name,layers);
+      });
+      const nextLabels=new Map();
+      for(const [part,layers] of buttonLayers){
+        const far=Math.max(...layers.map(layer=>layer.z)),near=Math.min(...layers.map(layer=>layer.z));
+        for(const {obj,z} of layers){
+          obj.material.userData.clearCap=layers.length>1&&far-near>.0005&&z>(far+near)/2;
+          obj.renderOrder=obj.material.userData.clearCap?20:10;
+        }
+        const insert=layers.reduce((a,b)=>a.z<b.z?a:b).obj;
+        const index=insert.geometry.index,p=insert.geometry.attributes.position,bounds=new THREE.Box3();
+        for(let i=0;i<(index?.count||p.count);i++)bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,index?index.getX(i):i));
+        const size=(bounds.max.x-bounds.min.x)*1.35;
+        const label=new THREE.Mesh(new THREE.PlaneGeometry(size,size),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.48,alphaTest:.2,depthWrite:true}));
+        label.material.name='symbol:'+part;label.renderOrder=11;
+        label.position.set((bounds.min.x+bounds.max.x)/2,(bounds.min.y+bounds.max.y)/2,bounds.max.z+.0008).applyMatrix4(insert.matrix);
+        label.quaternion.copy(insert.quaternion);insert.parent.add(label);nextLabels.set(part,{mesh:label,key:null});
+      }
       if(model) {pivot.remove(model); release(model);}
       uvBaker?.dispose();artworkCache.forEach(disposeBakedArtwork);artworkCache.clear();
-      model = next; pivot.add(model); quality = level;uvBaker=createNativeUvBaker(renderer,model);
+      model = next;buttonLabels=nextLabels;pivot.add(model);quality = level;uvBaker=createNativeUvBaker(renderer,model);
       if(activeState) apply(activeState, activeLight);
       report({loading:false,quality:level});
     } catch(error) {
@@ -267,7 +323,18 @@ export function createStudio(container, report) {
     } finally {busy = false;}
   }
   function apply(state, light = '#0072ff') {
-    activeState = state; activeLight = light;
+    activeState = state;activeLight = light;needsRender=true;
+    for(const [part,label] of buttonLabels){
+      const selection=state[part];if(!selection)continue;
+      label.mesh.visible=!uploads.has(part);
+      const entry=byId[selection.id]||{id:'custom:'+selection.hex,hex:selection.hex||'#69aaff'};
+      if(label.key!==entry.id){
+        label.mesh.material.map?.dispose();
+        const map=new THREE.CanvasTexture(createButtonSymbolCanvas(entry,part,quality!=='low'&&mobile?quality+'-mobile':quality));
+        map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=renderer.capabilities.getMaxAnisotropy();
+        label.mesh.material.map=map;label.mesh.material.needsUpdate=true;label.key=entry.id;
+      }
+    }
     barLights.forEach(lamp=>lamp.color.set(light));barHalos.forEach(halo=>halo.material.color.set(light));
     model?.traverse(obj => {
       if(!obj.isMesh) return;
@@ -278,7 +345,8 @@ export function createStudio(container, report) {
       if(!entry && selection.id !== 'custom') return;
       const native = selection.id === defaultId(part);
       const upload = uploads.get(part);
-      const group=parentPart(part),artwork=upload?null:artworkFor(entry,part,group);
+      const group=parentPart(part),appearance=entry||{id:'custom:'+selection.hex,hex:selection.hex||'#69aaff',type:'standard'};
+      const artwork=upload?null:artworkFor(appearance,part,group);
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
       m.userData.relief.value=artwork?.userData.relief||emptyArtwork;
@@ -320,6 +388,21 @@ export function createStudio(container, report) {
         }
       }
       m.roughnessMap = native && selection.finish === 'original' ? m.userData.originalRoughnessMap : null;
+      if(group==='buttons'||group==='dpad'){
+        m.transparent=false;m.opacity=1;m.depthWrite=true;
+        if(m.userData.clearCap){
+          // Smooth clear polymer, with symbols and color on the insert below.
+          // Transmission uses the opaque insert pass instead of alpha sorting.
+          m.map=null;m.color.set('#ffffff');m.roughnessMap=null;m.metalnessMap=null;
+          m.userData.tint.value.set('#ffffff');m.userData.blend.value=0;
+          m.userData.artworkEnabled.value=0;m.userData.surfaceEnabled.value=0;
+          m.transmission=1;m.thickness=.014;m.ior=1.49;
+          m.attenuationColor.set('#f4f8ff');m.attenuationDistance=.6;
+          m.roughness={matte:.5,satin:.2,gloss:.02,metallic:.1}[selection.finish]||.035;
+          m.metalness=0;m.clearcoat=1;m.clearcoatRoughness=.025;m.iridescence=0;
+          m.normalScale.copy(m.userData.originalNormalScale).multiplyScalar(.04);
+        }else{m.transmission=0;}
+      }
       m.needsUpdate = true;
     });
     // Keep only textures referenced by the current mix: 3K canvases are expensive
@@ -329,6 +412,7 @@ export function createStudio(container, report) {
   }
   let transition;
   function view(name, resetDistance = false) {
+    needsRender=true;
     const distance = resetDistance ? 4.9 : camera.position.distanceTo(controls.target);
     controls.target.set(0,-.05,0);
     const direction = {front:new THREE.Vector3(0,.06,1),back:new THREE.Vector3(0,.06,-1),angle:new THREE.Vector3(1,.6,1.6)}[name].normalize();
@@ -344,18 +428,19 @@ export function createStudio(container, report) {
       camera.position.lerpVectors(transition.from,transition.to,1-(1-t)**3);
       if(t===1) transition=null;
     }
-    controls.update(); renderer.render(scene,camera);
+    const changed=controls.update();
+    if(needsRender||changed||transition||controls.autoRotate){renderer.render(scene,camera);needsRender=false;}
   }
   frame = requestAnimationFrame(loop);
   return {
     load, apply, view,
     zoom(direction) {
-      transition=null;
+      transition=null;needsRender=true;
       const offset=camera.position.clone().sub(controls.target);
       const distance=THREE.MathUtils.clamp(offset.length()*(direction==='in'?.8:1.25),controls.minDistance,controls.maxDistance);
       camera.position.copy(controls.target).add(offset.setLength(distance));controls.update();
     },
-    rotate(value) {controls.autoRotate = value && !reducedMotion;},
+    rotate(value) {controls.autoRotate = value && !reducedMotion;needsRender=true;},
     async texture(part,file) {
       const url = URL.createObjectURL(file);
       try {
@@ -373,3 +458,4 @@ export function createStudio(container, report) {
     dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(disposeBakedArtwork);uvBaker?.dispose();emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }
+</script>

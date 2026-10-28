@@ -36,7 +36,8 @@ try {
  await page.locator('.player-colors').getByRole('button',{name:'Player 4',exact:true}).click();await page.screenshot({path:'artifacts/console-mobile-light.png'});
  await page.getByRole('tab',{name:'Customize',exact:true}).click();await page.getByRole('button',{name:'All parts',exact:true}).click();await page.getByRole('button',{name:/Grouped parts/}).click();
  await page.locator('#parts').getByRole('button',{name:'Touchpad',exact:true}).click();await page.screenshot({path:'artifacts/console-mobile-edit.png'});
- await page.getByRole('button',{name:'Done',exact:true}).click();assert(await page.locator('.part-library').isVisible());
+ await page.getByRole('button',{name:'Done',exact:true}).click();assert.equal(await page.locator('#sheet-toggle').getAttribute('aria-expanded'),'false');
+ await page.locator('#sheet-toggle').click();assert(await page.locator('.part-library').isVisible());
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.setViewportSize({width:844,height:390});await page.getByRole('tab',{name:'Settings',exact:true}).click();await page.screenshot({path:'artifacts/console-landscape.png'});
  assert.deepEqual(errors,[]);console.log('PASS: tab and keyboard navigation, part drill-down/back, group and individual edits, appearance persistence, light presets, PNG export, restore defaults, wide zoom range and reset, mobile portrait/landscape.');

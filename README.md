@@ -10,10 +10,11 @@ An interactive 3D playground for mixing DualSense controller parts, colors, and 
 - Independent colors, finishes, and texture imports for each piece.
 - Standard-color and limited-edition palettes, custom colors, and randomized combinations.
 - Startup model chooser recommending the source Original model, alongside separate High Definition and Low Definition GLB options.
-- Studio softbox reflections, area lighting, calibrated material finishes, and real cast shadows on all models.
+- Studio softbox reflections, area lighting, edition-specific material finishes, and real cast shadows on all models.
+- Clear face-button caps with reflective edges, refraction, and a separate printed-symbol insert.
 - Illuminated side light bars with subtle light spill, Player 1–4 color presets, white, and a custom color picker. Player palette references follow [PlayStation's controller color explanation](https://blog.de.playstation.com/?p=157987).
 - Transfer progress is bounded below 100% until the model is ready; missing transfer sizes use an indeterminate loading message.
-- Responsive desktop layout and expandable mobile customization panel.
+- Responsive desktop layout and a draggable mobile drawer with velocity-based snapping, a compact closed position, and a preview that resizes as the drawer moves.
 - Automatically saved color and finish selections, shareable build links, JSON export, and PNG snapshots.
 
 Switching between Grouped parts and Individual parts preserves each piece's settings. A group displays “Mixed selections” when its pieces differ; applying a palette, finish, or texture to that group updates all its pieces. The overview tiles show each part's current appearance.
@@ -24,7 +25,7 @@ The default controller uses the supplied model and its original textures. All 28
 
 Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
 
-Recreated artwork uses a secondary front-projection UV set with the original normal maps and lighting. Shell halves share a continuous layout; buttons and touchpads use local projection bounds. Imported textures continue to use the supplied model's original UV layout. Choosing an edition changes only the selected part; **Apply to entire controller** previews a complete edition.
+Recreated artwork and independent ink finishes are baked into the supplied model's native UV charts. Shell halves share a continuous layout, while touchpad artwork has its own perspective registration. Clear face-button caps sit above separate symbol inserts. Imported textures use the supplied model's original UV layout. Choosing an edition changes only the selected part; **Apply to entire controller** previews a complete edition.
 
 Imported textures must match the model's UV layout. Imports remain in the current browser session, including when switching model quality, but are not included in saved builds or share links. See [the asset guide](public/ASSETS.md) for material sets and reference maps.
 
@@ -64,7 +65,8 @@ Vite's relative asset base supports repository Pages paths and custom domains. N
 | --- | --- |
 | `src/App.vue` | Vue interface, app styles, reactive controls, build state, persistence, and sharing |
 | `src/catalog.js` | Part groups, individual pieces, and palettes |
-| `src/renderer.js` | Three.js scene, materials, cameras, and model loading |
+| `src/ControllerViewport.vue` | Vue-owned WebGL viewport, scene, physical materials, cameras, model loading, and resource cleanup |
+| `src/MobileDrawer.vue` | Reactive mobile drawer, drag gestures, scroll handoff, snap positions, and responsive preview sizing |
 | `src/edition-artwork.js` | Reference-based artwork canvases, per-part colors, and secondary UV projection |
 | `src/PartIcon.vue` | Generated icon-atlas display for individual parts and groups |
 | `public/models/` | Prepared models with configurable part materials |
