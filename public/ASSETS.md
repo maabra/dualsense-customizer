@@ -43,3 +43,7 @@ The supplied UV/material sets are `1011` (front, pad, trim/light surround), `100
 [texture-references.json](./texture-references.json) records source URLs, extraction methods and known limits. [CATALOG-AUDIT.md](./CATALOG-AUDIT.md) records the catalog-wide visual review and corrective work. Promotional photographs are inspected locally and are not bundled as controller textures.
 
 See [RIGHTS.md](./RIGHTS.md) for the no-ownership, testing-purpose notice and preserved model attribution. Controller designs, edition artwork, logos, trademarks and referenced photographs remain the property of their respective rights holders. The interface does not verify physical replacement-part fit or availability.
+
+## Chroma Collection finish
+
+Chroma Pearl, Indigo and Teal use a polished clear coat, lower surface roughness and separate iridescent film ranges on the shell, rear and trim. The underlying normal strength is reduced for the smooth coated appearance. Thumbstick rubber remains matte, and manual finish overrides restore their selected material behavior. References: https://direct.playstation.com/en-us/buy-accessories/dualsense-wireless-controller-chroma-indigo-for-ps5-pc-mac-mobile and https://direct.playstation.com/en-us/buy-accessories/dualsense-wireless-controller-chroma-pearl . These are visual estimates rather than measured coating specifications.
