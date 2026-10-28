@@ -19,7 +19,11 @@ Switching between Basic and Advanced preserves individual settings. A Basic grou
 
 ## Asset status
 
-The default controller uses the supplied model and its original textures. Limited-edition entries currently preview approximate palettes; they do **not** reproduce official edition graphics. No AI-generated controller artwork is used. The catalog is extensible and does not claim to cover every regional or promotional release.
+The default controller uses the supplied model and its original textures. Eight edition entries include hand-drawn artwork recreations: Gran Turismo, Wolverine Battle Yellow and Adamantium, 30th Anniversary, Astro Bot and Joyful, Marvel’s Spider-Man 2, and God of War Ragnarök. These are approximate recreations based on official product references, not extracted official texture maps. Other edition entries remain explicitly labeled color previews. The catalog does not claim to cover every regional or promotional release.
+
+Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
+
+Recreated artwork uses a secondary front-projection UV set with the original normal maps and lighting. Shell halves share a continuous layout; buttons and touchpads use local projection bounds. Imported textures continue to use the supplied model's original UV layout. Choosing an edition changes only the selected part; **Apply edition to all parts** previews a complete edition.
 
 Imported textures must match the model's UV layout. Imports remain in the current browser session, including when switching model quality, but are not included in saved builds or share links. See [the asset guide](public/ASSETS.md) for material sets and reference maps.
 
@@ -60,6 +64,8 @@ Vite's relative asset base supports repository Pages paths and custom domains. N
 | `src/App.vue` | Vue interface, app styles, reactive controls, build state, persistence, and sharing |
 | `src/catalog.js` | Part groups, individual pieces, and palettes |
 | `src/renderer.js` | Three.js scene, materials, cameras, and model loading |
+| `src/edition-artwork.js` | Reference-based artwork canvases, per-part colors, and secondary UV projection |
+| `src/PartIcon.vue` | Generated icon-atlas display for individual parts and groups |
 | `public/models/` | Prepared models with configurable part materials |
 | `public/textures/reference/` | Original albedo and opacity maps for UV reference |
 | `assets/original/` | Source Collada model and matching 4K textures |

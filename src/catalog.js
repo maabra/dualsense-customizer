@@ -1,3 +1,4 @@
+import { recreatedEditions } from './edition-artwork';
 export const parts = [
   ['shell', 'Front shell', '◒'], ['touchpad', 'Touchpad', '▱'],
   ['buttons', 'Face buttons', '◈'], ['dpad', 'D-pad', '✚'],
@@ -37,8 +38,8 @@ export const catalog = [
   color('rhythm', 'Rhythm Blue', '#316fe9', 'gloss'),
   edition('anniversary', '30th Anniversary', '#a5a5a0', '#626361'),
   edition('gt', 'Gran Turismo', '#e3e4e0', '#27292d'),
-  edition('wolverine-yellow', 'Wolverine · Battle Yellow', '#dcae26', '#26364e'),
-  edition('wolverine-metal', 'Wolverine · Adamantium', '#969da3', '#292e34', 'metallic'),
+  edition('wolverine-yellow', 'Wolverine · Battle Yellow', '#28292e', '#f5c72d'),
+  edition('wolverine-metal', 'Wolverine · Adamantium', '#292a2f', '#b2b4b8', 'metallic'),
   edition('astro', 'Astro Bot', '#dfe8ef', '#1875d6', 'gloss'),
   edition('astro-joyful', 'Astro Bot · Joyful', '#e3edf4', '#1b70d5', 'gloss'),
   edition('spiderman', 'Marvel’s Spider-Man 2', '#b42832', '#202126'),
@@ -61,6 +62,7 @@ export const catalog = [
   edition('camo', 'Gray Camouflage', '#777c76', '#393d38'),
 ];
 export const byId = Object.fromEntries(catalog.map(x => [x.id, x]));
+for(const entry of catalog)if(recreatedEditions.has(entry.id))entry.artwork='recreated';
 export const defaults = () => Object.fromEntries(advancedParts.map(([key]) => [key, { id: defaultId(key), finish: 'original' }]));
 export function paletteColor(entry, part) {
   return entry.type === 'edition' && ['trim', 'sticks', 'triggers', 'dpad', 'buttons','ps'].includes(parentPart(part)) ? entry.accent : entry.hex;

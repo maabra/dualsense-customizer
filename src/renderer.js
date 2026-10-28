@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
 import { transferProgress } from './loading';
+import { createEditionCanvas, artworkUVs, editionPartColor } from './edition-artwork';
 
 export function createStudio(container, report) {
   const scene = new THREE.Scene();
@@ -81,6 +82,19 @@ export function createStudio(container, report) {
   const loader = new GLTFLoader();
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
+  const artworkCache=new Map();
+  const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
+  function artworkFor(entry,part,group) {
+    if(entry?.artwork!=='recreated')return null;
+    const key=entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
+    if(!artworkCache.has(key)) {
+      const canvas=createEditionCanvas(entry.id,part,group);
+      if(!canvas){artworkCache.set(key,null);return null;}
+      const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+      texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());artworkCache.set(key,texture);
+    }
+    return artworkCache.get(key);
+  }
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const viewport = new ResizeObserver(() => {
     const w = container.clientWidth, h = container.clientHeight;
@@ -119,10 +133,12 @@ export function createStudio(container, report) {
         material.userData.originalMetalness=material.metalness;
         const part = material.name;
         const group = parentPart(part);
+        obj.geometry.setAttribute('studioArtworkUv',new THREE.BufferAttribute(artworkUVs(obj.geometry,group),2));
         material.userData.originalMap = material.map;
         material.userData.originalRoughnessMap = material.roughnessMap;
         material.userData.tint = {value:new THREE.Color('#ffffff')};
         material.userData.blend = {value:0};
+        material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
         // Clear button caps need their original alpha to reveal the symbols below.
         material.transparent = ['buttons','dpad','details'].includes(group);
         material.depthWrite = !['buttons','dpad'].includes(group);
@@ -151,11 +167,17 @@ export function createStudio(container, report) {
           }
           shader.uniforms.studioTint = material.userData.tint;
           shader.uniforms.studioBlend = material.userData.blend;
-          shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\n' + shader.fragmentShader;
+          shader.uniforms.studioArtwork=material.userData.artwork;shader.uniforms.studioArtworkEnabled=material.userData.artworkEnabled;
+          shader.vertexShader='attribute vec2 studioArtworkUv;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
+          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvEditionUV=studioArtworkUv;\nvEditionFacing=max(0.0,normal.z);');
+          shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
             #include <map_fragment>
             float detail = 0.72 + 0.28 * dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
             diffuseColor.rgb = mix(diffuseColor.rgb, studioTint * detail, studioBlend);
+            vec4 editionArt=texture2D(studioArtwork,vEditionUV);
+            float artMask=studioArtworkEnabled*editionArt.a*smoothstep(0.25,0.75,vEditionFacing);
+            diffuseColor.rgb=mix(diffuseColor.rgb,editionArt.rgb*(0.9+detail*0.1),artMask);
           `);
         };
       });
@@ -185,9 +207,11 @@ export function createStudio(container, report) {
       if(!entry && selection.id !== 'custom') return;
       const native = selection.id === defaultId(part);
       const upload = uploads.get(part);
+      const group=parentPart(part),artwork=upload?null:artworkFor(entry,part,group);
+      m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.map = upload || m.userData.originalMap;
       m.userData.blend.value = upload ? 0 : native ? 0 : 1;
-      m.userData.tint.value.set(selection.id === 'custom' ? selection.hex || '#c5f36b' : paletteColor(entry,part));
+      m.userData.tint.value.set(selection.id === 'custom' ? selection.hex || '#69aaff' : editionPartColor(entry,part,group)||paletteColor(entry,part));
       const finish = selection.finish === 'original' ? entry?.finish || 'matte' : selection.finish;
       const original=native && selection.finish==='original' && !upload;
       m.roughness = original ? m.userData.originalRoughness : {matte:.68,satin:.4,metallic:.26,gloss:.14}[finish] || .7;
@@ -233,6 +257,6 @@ export function createStudio(container, report) {
     clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
     hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
-    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
+    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(texture=>texture?.dispose());emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }

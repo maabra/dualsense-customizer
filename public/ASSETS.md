@@ -1,6 +1,23 @@
 # Authentic edition assets
 
-The configurator currently ships with the provided default DualSense model and its original embedded textures. Edition entries are **color approximations**, not replicas. No AI-generated controller artwork is used. The catalog is extensible and is not a claim to include every promotional or regional release.
+The configurator ships with the provided default DualSense models and their original embedded textures. Eight edition entries now include hand-drawn artwork recreations; all other editions remain color previews. Neither mode is an exact official replica. No AI-generated controller artwork is used. The separate UI part icons are image-generated. The catalog is extensible and does not claim to include every promotional or regional release.
+
+## Recreated artwork
+
+`src/edition-artwork.js` draws Gran Turismo racing stripes and badges, both Wolverine claw treatments, the 30th Anniversary colored face-button symbols, both Astro Bot eye treatments and blue detailing, Spider-Man symbiote strokes and emblem, and simplified Ragnarök bear/wolf motifs. These are best-effort approximations; small logos, line placement, finish, and some rear details differ from the official designs.
+
+The renderer adds a secondary front-projection UV attribute. Front shells and trim share the controller-wide layout, touchpads have dedicated local bounds, and each face button uses its own local projection. Artwork is restricted to front-facing surfaces, while curved sides retain the selected part color. The original UVs and normal maps are retained. Hand-drawn maps are recreated on demand, cached locally, and restored from edition IDs in saved builds. Texture uploads override recreated artwork for their selected pieces.
+
+The 25-part icon atlas is at `icons/dualsense-parts-atlas-v1.png`; its generation prompt is in `icons/README.md`.
+
+### Official visual references
+
+- Wolverine: https://blog.playstation.com/2026/08/11/first-look-at-marvels-wolverine-limited-edition-ps5-console-bundle-and-accessories
+- Gran Turismo: https://www.playstation.com/en-gb/accessories/dualsense-wireless-controller/buy-now/product/gran-turismo-limited-edition/
+- 30th Anniversary: https://blog.playstation.com/2024/09/19/celebrating-30-years-of-playstation-with-a-nostalgic-look/
+- Astro Bot: https://blog.playstation.com/2024/07/29/first-look-astro-bot-limited-edition-dualsense-wireless-controller/
+- Spider-Man 2: https://www.playstation.com/ja-jp/games/marvels-spider-man-2/limited-editions/
+- Ragnarök: https://www.youtube.com/watch?v=uvZZvTRFbTs
 
 To finish authentic mixed-edition previews, supply the original base-color textures or licensed scans for each edition. In particular: Gran Turismo touchpad, Wolverine front shell, and 30th Anniversary face-button artwork. Product photos are useful visual references but are not UV-ready texture maps.
 
