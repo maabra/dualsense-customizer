@@ -55,10 +55,9 @@ Vite's relative asset base supports repository Pages paths and custom domains. N
 
 | Path | Purpose |
 | --- | --- |
-| `src/App.vue` | Reactive controls, build state, persistence, and sharing |
+| `src/App.vue` | Vue interface, app styles, reactive controls, build state, persistence, and sharing |
 | `src/catalog.js` | Part groups, individual pieces, and palettes |
 | `src/renderer.js` | Three.js scene, materials, cameras, and model loading |
-| `src/style.css` | Desktop and mobile layouts |
 | `public/models/` | Prepared models with configurable part materials |
 | `public/textures/reference/` | Original albedo and opacity maps for UV reference |
 | `assets/original/` | Source Collada model and matching 4K textures |
