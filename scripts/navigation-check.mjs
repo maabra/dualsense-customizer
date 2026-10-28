@@ -1,0 +1,41 @@
+import { chromium } from '@playwright/test';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true,args:['--enable-webgl','--ignore-gpu-blocklist','--use-angle=swiftshader']});
+try {
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(25000);
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://127.0.0.1:4174/');await page.locator('input[value="low"]').check();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.locator('#loading').waitFor({state:'hidden',timeout:90000});
+ await page.screenshot({path:'artifacts/console-overview.png'});
+ await page.locator('#parts').getByRole('button',{name:'Front shell',exact:true}).click();
+ assert(await page.locator('.selected-part-heading').isVisible());
+ await page.getByTitle('Cosmic Red',{exact:true}).click();
+ await page.getByRole('button',{name:'All parts',exact:true}).click();
+ assert.match(await page.locator('#parts').getByRole('button',{name:'Front shell',exact:true}).textContent(),/Cosmic Red/);
+ // Keyboard navigation follows console-style tab order.
+ await page.getByRole('tab',{name:'Customize',exact:true}).focus();await page.keyboard.press('ArrowRight');
+ assert.equal(await page.getByRole('tab',{name:'Light bar',exact:true}).getAttribute('aria-selected'),'true');
+ await page.locator('.player-colors').getByRole('button',{name:'Player 2',exact:true}).click();
+ assert.equal(await page.locator('#light-color').inputValue(),'#ff334f');
+ await page.getByRole('tab',{name:'Settings',exact:true}).click();
+ const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:/Save an image/}).click();assert.equal((await downloaded).suggestedFilename(),'dualsense-studio.png');
+ await page.getByRole('button',{name:/Restore default design/}).click();
+ await page.getByRole('tab',{name:'Customize',exact:true}).click();
+ await page.getByRole('button',{name:/Individual parts/}).click();assert.equal(await page.locator('#parts button').count(),25);
+ await page.locator('#parts').getByRole('button',{name:'Left front shell',exact:true}).click();await page.getByRole('button',{name:'Editions',exact:true}).click();
+ await page.getByLabel('Search editions').fill('Wolverine · Battle Yellow');await page.locator('.edition-card').click();await page.getByRole('button',{name:'Apply to entire controller'}).click();
+ await page.screenshot({path:'artifacts/console-appearance.png'});
+ const canvas=page.locator('canvas');const normal=await canvas.screenshot();
+ for(let i=0;i<10;i++)await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+ const close=await canvas.screenshot();assert(!normal.equals(close));await page.screenshot({path:'artifacts/console-closeup.png'});
+ for(let i=0;i<18;i++)await page.getByRole('button',{name:'Zoom out',exact:true}).click();
+ assert(!close.equals(await canvas.screenshot()));await page.screenshot({path:'artifacts/console-wide.png'});
+ await page.locator('.zoom-controls').getByRole('button',{name:'Reset view',exact:true}).click();await page.waitForTimeout(700);
+ await page.setViewportSize({width:390,height:844});await page.getByRole('tab',{name:'Light bar',exact:true}).click();
+ await page.locator('.player-colors').getByRole('button',{name:'Player 4',exact:true}).click();await page.screenshot({path:'artifacts/console-mobile-light.png'});
+ await page.getByRole('tab',{name:'Customize',exact:true}).click();await page.getByRole('button',{name:'All parts',exact:true}).click();await page.getByRole('button',{name:/Grouped parts/}).click();
+ await page.locator('#parts').getByRole('button',{name:'Touchpad',exact:true}).click();await page.screenshot({path:'artifacts/console-mobile-edit.png'});
+ await page.getByRole('button',{name:'Done',exact:true}).click();assert(await page.locator('.part-library').isVisible());
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.setViewportSize({width:844,height:390});await page.getByRole('tab',{name:'Settings',exact:true}).click();await page.screenshot({path:'artifacts/console-landscape.png'});
+ assert.deepEqual(errors,[]);console.log('PASS: tab and keyboard navigation, part drill-down/back, group and individual edits, appearance persistence, light presets, PNG export, restore defaults, wide zoom range and reset, mobile portrait/landscape.');
+} finally {await browser.close();}

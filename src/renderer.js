@@ -27,10 +27,16 @@ export function createStudio(container, report) {
   controls.panSpeed = .75;
   controls.mouseButtons = {LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
   controls.touches = {ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
-  controls.minDistance = 2.4;
-  controls.maxDistance = 7;
+  controls.minDistance = .75;
+  controls.maxDistance = 24;
+  controls.zoomToCursor = true;
   controls.autoRotateSpeed = .7;
   controls.target.set(0, -.05, 0);
+  let inspecting=false;
+  controls.addEventListener('change',()=>{
+    const distance=camera.position.distanceTo(controls.target),next=distance<3.6||distance>6.5;
+    if(next!==inspecting){inspecting=next;report({inspecting});}
+  });
   const pmrem = new THREE.PMREMGenerator(renderer);
   // Large photographic softboxes give plastic broad highlights and metal crisp reflections.
   const room = new THREE.Scene();
@@ -221,8 +227,8 @@ export function createStudio(container, report) {
     });
   }
   let transition;
-  function view(name) {
-    const distance = camera.position.distanceTo(controls.target);
+  function view(name, resetDistance = false) {
+    const distance = resetDistance ? 4.9 : camera.position.distanceTo(controls.target);
     controls.target.set(0,-.05,0);
     const direction = {front:new THREE.Vector3(0,.06,1),back:new THREE.Vector3(0,.06,-1),angle:new THREE.Vector3(1,.6,1.6)}[name].normalize();
     transition = {from:camera.position.clone(),to:controls.target.clone().add(direction.multiplyScalar(distance)),start:performance.now()};
@@ -242,6 +248,12 @@ export function createStudio(container, report) {
   frame = requestAnimationFrame(loop);
   return {
     load, apply, view,
+    zoom(direction) {
+      transition=null;
+      const offset=camera.position.clone().sub(controls.target);
+      const distance=THREE.MathUtils.clamp(offset.length()*(direction==='in'?.8:1.25),controls.minDistance,controls.maxDistance);
+      camera.position.copy(controls.target).add(offset.setLength(distance));controls.update();
+    },
     rotate(value) {controls.autoRotate = value && !reducedMotion;},
     async texture(part,file) {
       const url = URL.createObjectURL(file);

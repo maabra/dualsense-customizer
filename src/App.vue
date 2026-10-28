@@ -1,57 +1,69 @@
 <template>
 
- <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><span class="header-caption">YOUR PERSONAL PLAYGROUND</span><button id="share" @click="share" class="outline">↗ <span>Share build</span></button></header>
+ <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><span class="header-caption">CONTROLLER DESIGN STUDIO</span><button id="share" @click="share" class="outline">↗ <span>Share design</span></button></header>
  <dialog ref="modelDialog" class="model-dialog" aria-labelledby="model-title" @cancel="!studioReady && $event.preventDefault()">
   <form @submit.prevent="startModel">
-   <StudioLogo /><h2 id="model-title">Choose your model</h2><p class="model-intro">The same studio. Your level of detail.</p>
+   <StudioLogo /><h2 id="model-title">Select your controller model</h2><p class="model-intro">Choose the model that suits your device. Your design works with all three.</p>
    <label v-for="model in modelOptions" :key="model.id" class="model-option" :class="{selected:chosenModel===model.id}"><input type="radio" v-model="chosenModel" :value="model.id" name="model"><span><strong>{{model.name}} <small v-if="model.id==='original'">RECOMMENDED</small></strong><span>{{model.description}}</span><em>{{model.size}}</em></span></label>
    <p class="model-hint">Every model supports all customizable parts. You can switch at any time.</p>
-   <button class="model-start" type="submit" autofocus>Open studio <span>↗</span></button>
+   <button class="model-start" type="submit" autofocus>Continue <span aria-hidden="true">→</span></button>
   </form>
  </dialog>
  <main>
   <section id="stage" aria-label="Interactive 3D controller preview">
-   <div class="intro"><p class="eyebrow">DUALSENSE WIRELESS CONTROLLER</p><h1>Play your way.</h1><p class="intro-copy">Explore every detail.<br>Create your own combination.</p><div class="shapes" aria-hidden="true"><span>△</span><span>○</span><span>×</span><span>□</span></div></div>
+   <div class="intro" v-show="section==='customize' && !appearanceOpen && !inspecting"><p class="eyebrow">DUALSENSE WIRELESS CONTROLLER</p><h1>Your controller.<br>Your way.</h1><p class="intro-copy">Choose your parts, finish and player color.</p><div class="shapes" aria-hidden="true"><span>△</span><span>○</span><span>×</span><span>□</span></div></div>
    <div id="canvas-wrap" ref="canvasWrap"></div>
    <div id="loading" role="status" v-if="loading"><span class="spinner"></span><span id="loading-text">{{loadingLabel}}</span></div>
    <div v-if="fatalError" class="model-error" role="alert"><strong>Model unavailable</strong><p>{{fatalError}}</p><div class="model-error-actions"><button class="outline" @click="retry">Try again</button><button class="outline" @click="openModelChooser">Choose another model</button></div></div>
    <div class="stage-label"><button id="model-status" :disabled="loading" @click="openModelChooser">{{ studioReady ? activeModel.name : 'Choose a model' }} <span>↗</span></button></div>
-   <div class="view-controls" aria-label="Camera controls"><button v-for="v in views" :key="v[0]" :class="{active: activeView===v[0]}" @click="setView(v[0])">{{v[1]}}</button><span></span><button id="rotate" :aria-pressed="rotating" :class="{active:rotating}" @click="toggleRotate" title="Auto rotate">⟳</button><button id="capture" @click="capture" title="Download preview image">↓ PNG</button></div>
+   <div class="zoom-controls" aria-label="Zoom controls"><button aria-label="Zoom in" title="Zoom in" @click="studio?.zoom('in')">＋</button><button aria-label="Zoom out" title="Zoom out" @click="studio?.zoom('out')">−</button><button class="fit-view" aria-label="Reset view" title="Reset view" @click="resetCamera"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+   <div class="view-controls" aria-label="Camera controls"><button v-for="v in views" :key="v[0]" :class="{active: activeView===v[0]}" @click="setView(v[0])">{{v[1]}}</button><span></span><button id="rotate" :aria-pressed="rotating" :class="{active:rotating}" @click="toggleRotate" title="Auto rotate">⟳</button></div>
    <p class="gesture"><span class="desktop-gesture">Left drag to rotate · Right drag to move · Scroll to zoom</span><span class="mobile-gesture">Drag to rotate · Two fingers to move and zoom</span></p>
   </section>
   <aside id="panel" aria-label="Controller customization">
    <button id="sheet-toggle" aria-label="Expand or collapse customization panel" :aria-expanded="expanded" @click="!suppressClick && (expanded = !expanded)" @touchstart="sheetTouchStart" @touchend="sheetTouchEnd"><span></span><span class="sheet-label">Customize your controller <b>⌄</b></span></button>
-   <div class="panel-heading"><div><p class="eyebrow">THE CONFIGURATOR</p><h2>Make it yours<span>.</span></h2></div><button id="reset" @click="reset" class="icon-button" title="Reset build" aria-label="Reset build"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 1 1-.15 5M4 4v5h5" /></svg></button></div>
-   <div class="panel-scroll">
-    <div class="section-top"><span class="step">01</span><h3>Choose a part</h3><span id="part-count">{{visibleParts.length}} PARTS</span></div>
-    <div class="mode-switch" role="group" aria-label="Customization detail"><button :class="{active:!advanced}" :aria-pressed="!advanced" @click="setAdvanced(false)">Basic</button><button :class="{active:advanced}" :aria-pressed="advanced" @click="setAdvanced(true)">Advanced <span>25 parts</span></button></div>
-    <p v-if="advanced" class="advanced-hint">Each piece gets its own color, finish, and texture. Left and right are viewed from the front.</p>
-    <div id="parts" class="parts" :class="{'advanced-parts':advanced}"><button v-for="p in visibleParts" :key="p[0]" class="part" :class="{active: selectedPart===p[0]}" :aria-pressed="selectedPart===p[0]" @click="selectedPart=p[0]; expanded=true"><PartIcon :part="p[0]" /><span class="part-name">{{p[1]}}</span></button></div>
-    <div class="section-top"><span class="step">02</span><h3>Find your finish</h3></div>
+   <div class="panel-heading"><div><p class="eyebrow">DUALSENSE STUDIO</p><h2>Controller design</h2></div><button id="reset" @click="reset" class="icon-button" title="Reset build" aria-label="Reset build"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 1 1-.15 5M4 4v5h5" /></svg></button></div>
+   <nav class="studio-nav" role="tablist" aria-label="Controller settings"><button v-for="item in sections" :key="item[0]" :id="'nav-'+item[0]" role="tab" :aria-selected="section===item[0]" :tabindex="section===item[0]?0:-1" :aria-controls="'section-'+item[0]" :class="{active:section===item[0]}" @click="selectSection(item[0])" @keydown="navKey($event,item[0])">{{item[1]}}</button></nav>
+   <div class="panel-scroll" ref="panelScroll">
+    <section id="section-customize" role="tabpanel" aria-labelledby="nav-customize" v-show="section==='customize'">
+    <div v-show="!appearanceOpen" class="part-library">
+    <div class="section-top"><h3>Select a part</h3><span id="part-count">{{visibleParts.length}} parts</span></div>
+    <div class="mode-switch" role="group" aria-label="Customization detail"><button :class="{active:!advanced}" :aria-pressed="!advanced" @click="setAdvanced(false)">Grouped parts</button><button :class="{active:advanced}" :aria-pressed="advanced" @click="setAdvanced(true)">Individual parts <span>25</span></button></div>
+    <p v-if="advanced" class="advanced-hint">Adjust one piece at a time. Left and right refer to the front view.</p>
+    <div id="parts" class="parts" :class="{'advanced-parts':advanced}"><button v-for="p in visibleParts" :key="p[0]" class="part" :class="{active: selectedPart===p[0]}" :aria-label="p[1]" :aria-pressed="selectedPart===p[0]" @click="selectPart(p[0])"><PartIcon :part="p[0]" /><span class="part-name">{{p[1]}}</span><small class="part-current">{{selectionName(p[0])}}</small></button></div>
+    </div><div v-show="appearanceOpen" class="appearance-menu"><button class="back-to-parts" @click="backToParts"><span aria-hidden="true">‹</span> All parts</button><div class="selected-part-heading"><PartIcon :part="selectedPart"/><div><p>Customize</p><h3>{{partName}}</h3></div></div>
     <div class="tabs" role="group" aria-label="Palette category"><button v-for="t in tabs" :key="t[0]" :class="{active:tab===t[0]}" :aria-pressed="tab===t[0]" @click="tab=t[0]; expanded=true">{{t[1]}}</button></div>
     <div id="palette">
      <div v-if="tab==='standard'" class="swatches"><button v-for="c in standardColors" :key="c.id" class="swatch" :class="{active:!mixed && current.id===c.id}" :aria-pressed="!mixed && current.id===c.id" :title="c.name" @click="choose(c)"><span class="swatch-color" :style="{'--swatch':c.hex}"></span><span class="swatch-name">{{c.name}}</span></button></div>
      <template v-else-if="tab==='edition'"><input class="edition-search" v-model="search" placeholder="Find an edition…" aria-label="Search editions"><div class="edition-list"><button v-for="c in editions" :key="c.id" class="edition-card" :class="{active:!mixed && current.id===c.id}" :aria-pressed="!mixed && current.id===c.id" @click="choose(c)"><span class="edition-chip" :style="{'--swatch':c.hex,'--accent':c.accent}"></span><span><b>{{c.name}}</b><small>{{c.artwork==='recreated'?'RECREATED ARTWORK':'COLOR PREVIEW'}}</small></span><span>{{!mixed && current.id===c.id?'✓':'↗'}}</span></button><p class="empty-search" v-if="!editions.length">No matching editions.</p></div></template>
-     <div v-else><label class="custom-control">Your own color<input type="color" :value="current.hex || currentEntry?.hex || '#c5f36b'" @input="customColor($event.target.value)"></label><label class="upload-label">↑ Import a texture for {{partName.toLowerCase()}}<input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadTexture"></label><p class="custom-hint">PNG, JPG or WebP · up to 20 MB. Must match this model’s UV layout. Uploaded textures stay in this session and are not included in share links.</p><button v-if="hasUpload" class="clear-texture" @click="clearTexture">Remove imported texture</button></div>
+     <div v-else><label class="custom-control">Custom color<input type="color" :value="current.hex || currentEntry?.hex || '#c5f36b'" @input="customColor($event.target.value)"></label><label class="upload-label">Import a texture for {{partName.toLowerCase()}}<input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadTexture"></label><p class="custom-hint">PNG, JPG or WebP · up to 20 MB. Must match this model’s UV layout. Uploaded textures stay in this session and are not included in share links.</p><button v-if="hasUpload" class="clear-texture" @click="clearTexture">Remove imported texture</button></div>
     </div>
-    <div id="selection-info"><p v-if="mixed" class="mixed-note">These pieces have different settings. Choosing a finish or palette here applies it to the whole group.</p><strong>{{ mixed ? 'Mixed selections' : currentEntry?.name || 'Custom color' }} <span v-if="hasUpload">· Imported texture</span></strong><p v-if="currentEntry?.type==='edition'">{{currentEntry.artwork==='recreated'?'Hand-drawn artwork recreation. Layout and details may differ from the official controller.':'Color preview only. Artwork has not been recreated for this edition yet.'}}</p><button v-if="currentEntry?.type==='edition'" class="whole-edition" @click="applyWholeEdition">Apply edition to all parts</button></div>
-    <div class="finish-row"><label for="finish">Surface finish</label><select id="finish" :value="mixedFinish ? 'mixed' : current.finish" @change="setFinish($event.target.value)"><option v-if="mixedFinish" value="mixed" disabled>Mixed</option><option value="original">Original</option><option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option><option value="gloss">Gloss</option></select></div>
-    <div class="section-top model-top"><span class="step">03</span><h3>The finer details</h3></div>
-    <div class="setting"><div><b>Controller model</b><p>{{activeModel.name}}</p></div><button class="outline" id="quality" :disabled="loading || !!fatalError" @click="openModelChooser">Change</button></div>
+    <div id="selection-info"><p v-if="mixed" class="mixed-note">These pieces have different settings. Choosing a finish or palette here applies it to the whole group.</p><strong>{{ mixed ? 'Mixed selections' : currentEntry?.name || 'Custom color' }} <span v-if="hasUpload">· Imported texture</span></strong><p v-if="currentEntry?.type==='edition'">{{currentEntry.artwork==='recreated'?'Hand-drawn artwork recreation. Layout and details may differ from the official controller.':'Color preview only. Artwork has not been recreated for this edition yet.'}}</p><button v-if="currentEntry?.type==='edition'" class="whole-edition" @click="applyWholeEdition">Apply to entire controller</button></div>
+    <div class="finish-row"><label for="finish">Finish</label><select id="finish" :value="mixedFinish ? 'mixed' : current.finish" @change="setFinish($event.target.value)"><option v-if="mixedFinish" value="mixed" disabled>Mixed</option><option value="original">Original</option><option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option><option value="gloss">Gloss</option></select></div>
+</div></section>
+    <section id="section-lighting" role="tabpanel" aria-labelledby="nav-lighting" v-show="section==='lighting'">
     <fieldset class="light-controls"><legend>Light bar</legend><p>Choose your player color.</p><div class="player-colors"><button v-for="preset in lightPresets" :key="preset.name" :class="{active:light.toLowerCase()===preset.color}" :aria-pressed="light.toLowerCase()===preset.color" :style="{'--player-color':preset.color}" @click="light=preset.color"><span class="player-dot"></span>{{preset.name}}</button></div><label class="custom-light" for="light-color"><span>Custom color <small>{{light.toUpperCase()}}</small></span><input type="color" id="light-color" v-model="light" aria-label="Custom light bar color"></label></fieldset>
-    <details class="build-details"><summary>Your combination <span>＋</span></summary><div id="build-list"><div v-for="p in advancedParts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">↓ Export build JSON</button></details>
-    <p class="asset-note">Some editions include recreated artwork; others show color previews. Imported textures use the original UVs. <a href="./ASSETS.md" target="_blank">Asset guide ↗</a></p>
+</section><section id="section-settings" role="tabpanel" aria-labelledby="nav-settings" v-show="section==='settings'">
+    <h3 class="settings-title">Preview settings</h3>
+    <div class="setting"><div><b>Controller model</b><p>{{activeModel.name}}</p></div><button class="outline" id="quality" :disabled="loading || !!fatalError" @click="openModelChooser">Change</button></div>
+    <div class="settings-row"><div><b>Camera</b><p>Return to the default view and zoom.</p></div><button class="outline" @click="resetCamera">Reset view</button></div>
+    <h3 class="settings-title">Your design</h3>
+    <button class="settings-action" @click="capture"><span>Save an image<small>Download the current view as a PNG.</small></span><span aria-hidden="true">↓</span></button>
+    <button class="settings-action" id="randomize" @click="randomize"><span>Randomize appearance<small>Explore a new combination of parts.</small></span><span aria-hidden="true">↗</span></button>
+    <button class="settings-action" @click="reset"><span>Restore default design<small>Reset all parts and the light bar.</small></span><span aria-hidden="true">↺</span></button>
+    <details class="build-details"><summary>Design summary <span>＋</span></summary><div id="build-list"><div v-for="p in advancedParts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">Export design (.json)</button></details>
+    </section><p class="asset-note">Unofficial artwork recreations. Some editions show colors only. <a href="./ASSETS.md" target="_blank">About the assets ↗</a></p>
    </div>
-   <div class="panel-footer"><button id="randomize" @click="randomize">⤨ <span>Surprise me</span></button><span>MIX. MATCH. MAKE.</span></div>
+   <div class="panel-footer"><button class="done-button" @click="finishEditing">Done</button><span class="instant-status"><span aria-hidden="true">✓</span> Changes apply instantly</span></div>
   </aside>
  </main>
- <footer><span>DESIGNED FOR YOUR NEXT OBSESSION.</span><span>Unofficial fan project · <a href="https://sketchfab.com/3d-models/playstation-5-dualsense-878c1f882808477ab81c2fe86d5a3936" target="_blank" rel="noreferrer">3D model: AHarmlessPotato / CC BY 4.0 ↗</a></span></footer>
+ <footer><span>AN INDEPENDENT CONTROLLER CONFIGURATOR</span><span>Unofficial fan project · <a href="https://sketchfab.com/3d-models/playstation-5-dualsense-878c1f882808477ab81c2fe86d5a3936" target="_blank" rel="noreferrer">3D model: AHarmlessPotato / CC BY 4.0 ↗</a></span></footer>
  <div id="toast" role="status" :class="{show:toastText}">{{toastText}}</div>
 
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
 import { createStudio } from './renderer';
 import StudioLogo from './StudioLogo.vue';
@@ -60,10 +72,25 @@ import PartIcon from './PartIcon.vue';
 const STORAGE = 'dualsense-studio-v1';
 const build = reactive(defaults());
 const selectedPart = ref('shell'), tab = ref('standard'), search = ref('');
+const section=ref('customize'), appearanceOpen=ref(false), panelScroll=ref(null), inspecting=ref(false);
+const sections=[['customize','Customize'],['lighting','Light bar'],['settings','Settings']];
+function scrollMenuTop(){nextTick(()=>panelScroll.value?.scrollTo({top:0}));}
+function selectSection(key){section.value=key;expanded.value=true;scrollMenuTop();}
+function selectPart(key){selectedPart.value=key;appearanceOpen.value=true;expanded.value=true;scrollMenuTop();}
+function backToParts(){appearanceOpen.value=false;scrollMenuTop();}
+function finishEditing(){section.value='customize';appearanceOpen.value=false;expanded.value=false;scrollMenuTop();}
+function navKey(event,key){
+ const index=sections.findIndex(item=>item[0]===key);let next=index;
+ if(event.key==='ArrowRight')next=(index+1)%sections.length;
+ else if(event.key==='ArrowLeft')next=(index+sections.length-1)%sections.length;
+ else if(event.key==='Home')next=0;else if(event.key==='End')next=sections.length-1;else return;
+ event.preventDefault();selectSection(sections[next][0]);nextTick(()=>document.getElementById('nav-'+sections[next][0])?.focus());
+}
+
 const modelOptions = [
-  {id:'original',name:'Original',description:'The supplied Collada model with its original 4K textures.',size:'52 MB download · source geometry and original materials'},
-  {id:'high',name:'High Definition',description:'The previous detailed GLB model with 4K textures.',size:'50 MB download'},
-  {id:'low',name:'Low Definition',description:'The lightweight GLB model with 1K textures.',size:'7 MB download · faster on mobile'},
+  {id:'original',name:'Original',description:'Original geometry with detailed 4K textures.',size:'52 MB download · source geometry and original materials'},
+  {id:'high',name:'High Definition',description:'High-definition geometry and 4K textures.',size:'50 MB download'},
+  {id:'low',name:'Low Definition',description:'Faster loading and lower memory use.',size:'7 MB download · faster on mobile'},
 ];
 const lightPresets=[{name:'Player 1',color:'#0072ff'},{name:'Player 2',color:'#ff334f'},{name:'Player 3',color:'#32d16d'},{name:'Player 4',color:'#ed69bb'},{name:'White',color:'#ffffff'}];
 const light = ref('#0072ff'), quality = ref('original'), loading = ref(false), loadingLabel = ref('Loading original model…');
@@ -73,11 +100,12 @@ function openModelChooser() {chosenModel.value=quality.value;modelDialog.value?.
 function startModel() {modelDialog.value?.close();studio?.load(chosenModel.value);}
 const expanded = ref(false), rotating = ref(false), activeView = ref('angle'), toastText = ref(''), fatalError = ref('');
 const canvasWrap = ref(null), uploaded = reactive({});
-const views = [['front','Front'],['back','Back'],['angle','Perspective']];
-const tabs = [['standard','Colors'],['edition','Editions'],['custom','Custom']];
+const views = [['front','Front'],['back','Rear'],['angle','Perspective']];
+const tabs = [['standard','Colors'],['edition','Editions'],['custom','Personalize']];
 const advanced = ref(false);
 const visibleParts = computed(()=>advanced.value ? advancedParts : parts);
 const selectedTargets = computed(()=>targetsFor(selectedPart.value));
+function selectionName(part){const choices=targetsFor(part).map(key=>build[key]);return choices.every(choice=>choice.id===choices[0].id)?byId[choices[0].id]?.name||'Custom color':'Mixed';}
 const current = computed(()=>build[selectedTargets.value[0]]);
 const mixed = computed(()=>selectedTargets.value.some(key=>JSON.stringify(build[key])!==JSON.stringify(current.value)));
 const mixedFinish = computed(()=>selectedTargets.value.some(key=>build[key].finish!==current.value.finish));
@@ -120,16 +148,17 @@ function customColor(hex) {clearSelectedUploads();for(const key of selectedTarge
 function reset() {
   Object.assign(build,defaults());light.value='#0072ff';
   for(const [p] of advancedParts) {studio?.clearTexture(p);delete uploaded[p];}
-  setView('angle');notify('Back to the original.');
+  resetCamera();notify('Default design restored.');
 }
 function randomize() {
   for(const [p] of advancedParts) {
     studio?.clearTexture(p);delete uploaded[p];
     build[p]={id:catalog[Math.floor(Math.random()*catalog.length)].id,finish:'original'};
   }
-  notify('A new combination. All yours.');
+  notify('New appearance applied.');
 }
-function setView(view) {activeView.value=view;studio?.view(view);}
+function setView(view,resetDistance=false) {activeView.value=view;studio?.view(view,resetDistance);}
+function resetCamera(){setView('angle',true);}
 function toggleRotate() {
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) {notify('Auto rotation is off to respect reduced motion.');return;}
   rotating.value=!rotating.value;studio?.rotate(rotating.value);
@@ -143,7 +172,7 @@ function exportBuild() {
 }
 async function share() {
   const url=new URL(location.href);url.hash='build='+encodeURIComponent(JSON.stringify(snapshot()));
-  try {await navigator.clipboard.writeText(url.href);notify(Object.keys(uploaded).length?'Link copied. Imported textures are not included.':'Build link copied.');}
+  try {await navigator.clipboard.writeText(url.href);notify(Object.keys(uploaded).length?'Link copied. Imported textures are not included.':'Design link copied.');}
   catch {location.hash=url.hash;notify('Build saved in the address bar. Copy the URL to share.');}
 }
 async function uploadTexture(event) {
@@ -162,6 +191,7 @@ function sheetTouchEnd(event) {
   if(Math.abs(delta)>20) {expanded.value=delta<0;suppressClick=true;setTimeout(()=>suppressClick=false,300);}
 }
 function report(status) {
+  if(status.inspecting!==undefined)inspecting.value=status.inspecting;
   if(status.loading!==undefined) loading.value=status.loading;
   const name=modelOptions.find(model=>model.id===status.level)?.name || 'controller';
   if(status.loading) loadingLabel.value=`Loading ${name}…`;
@@ -213,4 +243,13 @@ onBeforeUnmount(()=> {studio?.dispose();clearTimeout(toastTimer);window.removeEv
 
 .whole-edition{border:1px solid #4c78af;background:#1e3657;color:#dcecff;border-radius:18px;padding:8px 12px;margin-top:12px;font-size:10px}.part{min-height:78px}.advanced-parts .part{min-height:76px}
 .icon-button{display:grid;place-items:center;padding:0;line-height:0;flex-shrink:0}.icon-button svg{display:block}
+
+/* Console-style navigation: one task per panel, visible focus, quieter surfaces. */
+header{height:78px;padding:0 36px;background:#080d15}.header-caption{font-size:9px;letter-spacing:2px}.brand{font-weight:500}main{grid-template-columns:minmax(0,1fr) 410px;height:calc(100svh - 125px)}#panel{background:linear-gradient(160deg,#171e2b,#111824);border-left-color:#29374b}.panel-heading{padding:28px 28px 22px}.panel-heading h2{font-size:25px;font-weight:400;letter-spacing:-.7px}.panel-heading .eyebrow{font-size:8px;letter-spacing:1.8px;margin-bottom:9px}.icon-button{height:34px;width:34px;color:#b2c2d8;background:#1c2839;border-color:#3a4b63}.icon-button:hover{background:#2c405d;color:white}.studio-nav{display:flex;gap:8px;padding:0 24px;border-bottom:1px solid #34435a;flex-shrink:0}.studio-nav button{flex:1;position:relative;background:none;border:0;padding:16px 4px;color:#93a4bc;font-size:12px;white-space:nowrap}.studio-nav button.active{color:#fff}.studio-nav button.active:after{content:'';position:absolute;bottom:-1px;left:12%;right:12%;height:3px;border-radius:3px;background:#76b3ff;box-shadow:0 0 12px #2584f64d}.studio-nav button:hover{color:white}.panel-scroll{padding:24px 28px;min-height:0;flex:1;scrollbar-gutter:stable}.section-top{margin-bottom:17px}.section-top h3{font-weight:400;font-size:15px}.section-top>span:last-child:not(.step){text-transform:none;letter-spacing:.3px;color:#7f94b0;font-size:10px}.mode-switch{background:#0e1622;border-color:#2d3b51;border-radius:24px;padding:4px;gap:4px;margin-bottom:20px}.mode-switch button{font-size:10px;padding:9px 5px;border-radius:20px;color:#92a7c5}.mode-switch button.active{background:#2b4568;color:#f1f6ff;box-shadow:0 1px 5px #0003}.mode-switch button span{font-size:8px;margin-left:3px}.parts{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:0}.part{border:1px solid #334158;border-radius:12px;background:linear-gradient(145deg,#243047,#1b2536);padding:16px 8px 13px;min-height:117px;gap:9px;transition:background .15s,border-color .15s,box-shadow .15s;position:relative}.part:hover{border-color:#8fb6ea;background:#293f5d;box-shadow:0 0 0 2px #7eb3f526}.part.active{background:linear-gradient(145deg,#2c476b,#243951);border-color:#91bdff;box-shadow:inset 0 0 0 1px #91bdff33}.part .part-icon{width:58px;height:43px}.part .part-name{font-size:11px;color:#ecf3ff;font-weight:500}.part-current{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#90a6c4;font-size:9px;font-weight:400}.advanced-parts{grid-template-columns:repeat(3,minmax(0,1fr));max-height:none;overflow:visible;padding:0;gap:9px}.advanced-parts .part{min-height:110px;padding:12px 4px}.advanced-parts .part-icon{width:40px;height:36px}.advanced-parts .part-name{font-size:9px}.advanced-parts .part-current{font-size:8px;max-width:85px}.advanced-hint{font-size:11px;color:#97a9c2;line-height:1.65;margin-bottom:18px}.back-to-parts{display:flex;align-items:center;gap:9px;border:0;background:none;color:#aec9ed;font-size:11px;padding:0 0 16px;min-height:32px}.back-to-parts>span{font-size:25px;font-weight:300;line-height:14px}.back-to-parts:hover{color:white}.selected-part-heading{display:flex;align-items:center;gap:16px;padding:0 0 23px}.selected-part-heading>.part-icon{height:55px;width:62px}.selected-part-heading p{font-size:10px;color:#93a8c5;margin:0 0 5px}.selected-part-heading h3{font-size:22px;font-weight:400;letter-spacing:-.4px}.tabs{border-radius:24px;padding:4px;background:#0d1520;border-color:#2a3b53;gap:4px;margin-bottom:23px}.tabs button{border-radius:20px;font-size:11px;padding:10px 2px}.tabs button.active{background:#2d4665;color:white}.swatches{gap:18px 9px}.swatch-color{height:37px;width:37px;border-width:4px;border-color:#182333}.swatch-name{font-size:9px;color:#9fb0c8}.edition-list{max-height:none;overflow:visible;gap:9px}.edition-card{padding:14px 12px;border-radius:10px;background:#1a2638;border-color:#34435b;min-height:65px}.edition-card.active{background:#263e60;border-color:#7caff1}.edition-card b{font-size:12px;font-weight:400}.edition-card small{font-size:8px;color:#93aac9}.edition-search{border-radius:20px;background:#0f1928;padding:12px 15px;border-color:#3d5270;font-size:12px}.edition-chip{width:33px;height:33px;flex-shrink:0}.finish-row{padding-top:23px;font-size:12px}.finish-row select{font-size:11px;padding:8px 10px;border-color:#3f5575;border-radius:8px;background:#1f3048}.whole-edition{width:100%;font-size:11px;padding:11px;margin-top:16px;background:#244367;border-color:#6a9fdc;border-radius:23px}#selection-info{padding-top:19px;margin-top:5px}#selection-info strong{font-size:12px}#selection-info p{font-size:10px;line-height:1.7}.panel-footer{padding:18px 28px;border-color:#2f3c50;background:#111a28;gap:20px}.panel-footer .done-button{font-size:12px;font-weight:500;min-width:90px;justify-content:center;padding:11px 24px;background:#087cf0;border-radius:24px}.panel-footer .instant-status{font-size:9px;letter-spacing:0;color:#91a5bf;line-height:1.5}.instant-status>span{color:#8bbcff;margin-right:5px}.settings-title{font-size:11px;letter-spacing:.3px;color:#9aafcb;font-weight:400;margin:0 0 10px}.settings-title:not(:first-child){margin-top:30px}.settings-row,.settings-action{border:0;border-bottom:1px solid #2f4058;padding:18px 0;display:flex;align-items:center;justify-content:space-between;gap:15px;width:100%;text-align:left;background:none}.setting{padding:16px 0;border-bottom:1px solid #2f4058}.settings-row b,.setting b{font-size:12px;font-weight:400;color:#e8f0ff}.settings-row p,.setting p{font-size:10px;color:#8da4c3;line-height:1.6;margin:6px 0 0}.settings-row .outline,.setting .outline{flex-shrink:0;font-size:10px;padding:9px 12px}.settings-action>span:first-child{font-size:12px;color:#e5edfb}.settings-action small{display:block;font-size:10px;color:#8da4c3;line-height:1.7;margin-top:6px}.settings-action>span:last-child{color:#91bfff}.settings-action:hover{color:white;background:#1b2b42}.build-details{margin-top:25px}.build-details summary{font-size:12px}.build-item{padding:9px 0}.asset-note{font-size:9px;color:#7389a8;line-height:1.7;margin-top:24px}.light-controls{margin:0;border:0;padding:0}.light-controls legend{font-size:20px;font-weight:400;letter-spacing:-.4px;margin-bottom:8px}.light-controls>p{font-size:11px;line-height:1.6;margin-bottom:22px}.player-colors{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.player-colors button{align-items:flex-start;gap:16px;padding:17px 16px;min-height:83px;border-radius:12px;background:#1b293d;border-color:#3a4c68;font-size:11px}.player-colors button.active{background:#263f60;border-color:#90bfff;box-shadow:inset 0 0 0 1px #90bfff44}.player-dot{height:7px;width:40px;box-shadow:0 0 16px color-mix(in srgb,var(--player-color) 40%,transparent)}.player-colors button:last-child{grid-column:1/-1;min-height:78px}.custom-light{padding-top:20px;margin-top:22px;border-top:1px solid #34455e;font-size:12px}.custom-light input{height:38px;width:52px}.custom-light small{font-size:10px}.zoom-controls{position:absolute;z-index:3;right:27px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;padding:5px;gap:3px;border:1px solid #415775;border-radius:26px;background:#111d2cbb;backdrop-filter:blur(15px)}.zoom-controls button{border:0;background:transparent;display:grid;place-items:center;color:#d2e4ff;width:34px;height:34px;border-radius:50%;font-size:21px;font-weight:300;line-height:1;padding:0}.zoom-controls button:hover{background:#29486c;color:white}.zoom-controls .fit-view{margin-top:3px;border-top:1px solid #3b4e69;border-radius:0 0 20px 20px;height:39px}.intro{top:6%;left:6%}.intro .eyebrow{font-size:8px;letter-spacing:1.7px;color:#879cb9}h1{font-size:clamp(36px,4vw,58px);font-weight:300;line-height:1.08;letter-spacing:-2.6px}.intro-copy{font-size:12px;max-width:240px;line-height:1.7;color:#92a7c5;margin-top:16px}.shapes{font-size:18px;gap:20px;opacity:.45;margin-top:20px}.view-controls{bottom:63px;padding:5px}.view-controls button{font-size:10px;padding:9px 14px}.gesture{font-size:9px;color:#6f85a3}.model-dialog{border-radius:20px;padding:35px;background:linear-gradient(145deg,#1b293e,#111c2e);border-color:#435b7e;box-shadow:0 35px 140px #000a}.model-dialog h2{font-size:28px;font-weight:300;line-height:1.25;max-width:340px}.model-option{background:#1e2b40;border-color:#3a4e6b;padding:20px 16px;margin-bottom:12px;transition:background .15s}.model-option.selected{background:#2b4160;border-color:#88b8f5;box-shadow:inset 0 0 0 1px #88b8f544}.model-option:hover{background:#293d57}.model-option strong{font-size:14px;font-weight:400}.model-option small{background:#345b8d;font-size:7px;border-radius:10px;padding:5px 8px;letter-spacing:.7px}.model-option input{margin-top:4px}.model-intro{line-height:1.8;margin-top:14px}.model-start{font-weight:500;font-size:12px}.model-hint{line-height:1.8;margin:20px 0}.model-start span{font-size:16px}footer{font-size:7px;letter-spacing:.8px}
+@media(min-width:1500px){main{grid-template-columns:minmax(0,1fr) 440px}.panel-scroll{padding:26px 32px}.panel-heading{padding-left:32px}.studio-nav{padding-left:28px;padding-right:28px}.parts{gap:14px}.part{min-height:125px}.advanced-parts .part{min-height:113px}}
+@media(max-width:1100px){header{height:68px;padding:0 25px}main{grid-template-columns:minmax(0,1fr) 360px;height:calc(100svh - 111px)}.panel-heading{padding:23px 22px 19px}.panel-heading h2{font-size:23px}.studio-nav{padding:0 18px;gap:2px}.studio-nav button{font-size:11px}.panel-scroll{padding:22px}.panel-footer{padding:16px 22px;gap:12px}.part{min-height:108px}.part-current{font-size:8px}.zoom-controls{right:20px}.intro h1{font-size:42px}.intro-copy{font-size:11px}}
+@media(max-width:760px){header{height:65px;padding:0 20px}main{display:block;height:calc(100svh - 65px);min-height:600px}.panel-heading{padding:13px 22px 16px}.panel-heading h2{font-size:23px}.studio-nav{padding:0 18px}.studio-nav button{padding:13px 2px;font-size:12px}.panel-scroll{padding:20px 22px}.parts{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.part{min-height:105px;padding:12px 6px}.part .part-name{font-size:11px}.part-current{font-size:9px}.advanced-parts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.advanced-parts .part{min-height:100px}.advanced-parts .part-current{max-width:80px;font-size:8px}.panel-footer{padding:13px 22px calc(13px + env(safe-area-inset-bottom))}.panel-footer .done-button{padding:10px 22px}.panel-footer .instant-status{font-size:9px;margin-left:auto}.selected-part-heading h3{font-size:22px}.selected-part-heading>.part-icon{height:44px;width:52px}.swatch-name{font-size:9px}.swatches{gap:18px 8px}.zoom-controls{right:14px;top:47%;padding:3px}.zoom-controls button{width:29px;height:29px;font-size:19px}.zoom-controls .fit-view{height:33px}.intro{left:24px;top:22px}.intro h1{font-size:32px;letter-spacing:-1.3px}.intro-copy{display:none}.intro .eyebrow{font-size:6px;margin-bottom:9px}.shapes{display:none}.player-colors{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.player-colors button{font-size:12px;min-height:80px}.light-controls legend{font-size:22px}.view-controls{bottom:35px}.view-controls button{font-size:10px;padding:8px 12px}body.sheet-expanded .view-controls{bottom:12px}body.sheet-expanded .intro{display:none}.model-dialog{padding:25px}.model-dialog h2{font-size:25px}.model-option{padding:16px 13px}.model-option strong{font-size:13px}.model-intro{font-size:11px}}
+@media(max-height:540px) and (min-width:761px) and (max-width:1100px){header{height:52px}main{height:calc(100svh - 52px);min-height:0;grid-template-columns:minmax(0,1fr) 330px}.panel-heading{padding:13px 18px}.panel-heading h2{font-size:21px}.studio-nav button{padding:10px 0;font-size:10px}.panel-scroll{padding:16px 18px}.panel-footer{padding:9px 18px}.panel-footer .done-button{padding:8px 20px}.intro h1{font-size:28px}.zoom-controls{right:14px}.zoom-controls button{width:27px;height:27px}.zoom-controls .fit-view{height:29px}.view-controls{bottom:12px}}
+
+@media(max-width:760px){body.sheet-expanded #stage{height:32%}}
 </style>

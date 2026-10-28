@@ -4,18 +4,19 @@ An interactive 3D playground for mixing DualSense controller parts, colors, and 
 
 ## Features
 
-- Left-drag to orbit, right-drag to move, and scroll to zoom. Touch controls support one-finger rotation and two-finger movement and zoom. Camera presets recenter the view.
-- Basic controls for whole groups, or Advanced controls for 25 individual pieces: front and rear shell halves, center trim halves, touchpad, four face buttons, four D-pad directions, two thumbsticks, L1/R1 bumpers, L2/R2 triggers, Create, Options, PS, and mute buttons.
+- Left-drag to orbit, right-drag to move, and scroll toward the cursor to zoom. Touch controls support one-finger rotation and two-finger movement and zoom. Zoom buttons span 0.75–24 model units; Reset view restores the default framing.
+- Console-inspired Customize, Light bar, and Settings menus, including keyboard tab navigation. Choosing a part opens its appearance menu; All parts returns to the overview without losing edits.
+- Grouped controls or 25 individual pieces: front and rear shell halves, center trim halves, touchpad, four face buttons, four D-pad directions, two thumbsticks, L1/R1 bumpers, L2/R2 triggers, Create, Options, PS, and mute buttons.
 - Independent colors, finishes, and texture imports for each piece.
 - Standard-color and limited-edition palettes, custom colors, and randomized combinations.
 - Startup model chooser recommending the source Original model, alongside separate High Definition and Low Definition GLB options.
-- Studio softbox reflections, area lighting, calibrated material finishes, and real cast shadows on both models.
+- Studio softbox reflections, area lighting, calibrated material finishes, and real cast shadows on all models.
 - Illuminated side light bars with subtle light spill, Player 1–4 color presets, white, and a custom color picker. Player palette references follow [PlayStation's controller color explanation](https://blog.de.playstation.com/?p=157987).
 - Transfer progress is bounded below 100% until the model is ready; missing transfer sizes use an indeterminate loading message.
 - Responsive desktop layout and expandable mobile customization panel.
 - Automatically saved color and finish selections, shareable build links, JSON export, and PNG snapshots.
 
-Switching between Basic and Advanced preserves individual settings. A Basic group displays “Mixed selections” when its pieces differ; applying a palette, finish, or texture to that group updates all its pieces.
+Switching between Grouped parts and Individual parts preserves each piece's settings. A group displays “Mixed selections” when its pieces differ; applying a palette, finish, or texture to that group updates all its pieces. The overview tiles show each part's current appearance.
 
 ## Asset status
 
@@ -23,7 +24,7 @@ The default controller uses the supplied model and its original textures. Eight 
 
 Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
 
-Recreated artwork uses a secondary front-projection UV set with the original normal maps and lighting. Shell halves share a continuous layout; buttons and touchpads use local projection bounds. Imported textures continue to use the supplied model's original UV layout. Choosing an edition changes only the selected part; **Apply edition to all parts** previews a complete edition.
+Recreated artwork uses a secondary front-projection UV set with the original normal maps and lighting. Shell halves share a continuous layout; buttons and touchpads use local projection bounds. Imported textures continue to use the supplied model's original UV layout. Choosing an edition changes only the selected part; **Apply to entire controller** previews a complete edition.
 
 Imported textures must match the model's UV layout. Imports remain in the current browser session, including when switching model quality, but are not included in saved builds or share links. See [the asset guide](public/ASSETS.md) for material sets and reference maps.
 

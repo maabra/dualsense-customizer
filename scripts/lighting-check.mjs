@@ -10,9 +10,10 @@ const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Micr
 try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(25000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:4174/');await page.locator('input[value="low"]').check();await page.getByRole('button',{name:'Open studio'}).click();
+ await page.goto('http://127.0.0.1:4174/');await page.locator('input[value="low"]').check();await page.getByRole('button',{name:'Continue'}).click();
  await page.locator('#loading').waitFor({state:'hidden',timeout:90000});
  await page.screenshot({path:'artifacts/ps-studio-desktop.png'});
+ await page.getByRole('tab',{name:'Light bar',exact:true}).click();
  const presets=[['Player 2','#ff334f'],['Player 1','#0072ff'],['Player 3','#32d16d'],['Player 4','#ed69bb'],['White','#ffffff']];
  const pictures=[];
  for(const [name,color] of presets) {
@@ -26,7 +27,7 @@ try {
  await page.locator('#light-color').fill('#ff9900');await page.locator('#light-color').dispatchEvent('input');
  await page.waitForTimeout(150);assert.equal(await page.locator('.player-colors button[aria-pressed="true"]').count(),0);
  await page.screenshot({path:'artifacts/ps-custom-light.png'});
- await page.setViewportSize({width:390,height:844});await page.locator('#sheet-toggle').click();
+ await page.setViewportSize({width:390,height:844});await page.getByRole('tab',{name:'Light bar',exact:true}).click();
  const blue=page.locator('.player-colors').getByRole('button',{name:'Player 1',exact:true});await blue.scrollIntoViewIfNeeded();await blue.click();
  await page.screenshot({path:'artifacts/ps-studio-mobile.png'});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
