@@ -84,9 +84,12 @@ export function createStudio(container, report) {
     if (busy || (model && level === quality)) return;
     busy = true; report({loading:true,level});
     try {
-      const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/dualsense-${level}.glb`, event => {
+      // Anchor assets to the JS module, not a potentially stale page URL.
+      const modelUrl = new URL(/* @vite-ignore */ `../models/dualsense-${level}.glb`, import.meta.url);
+      const progress = event => {
         if(event.total) report({progress:Math.round(event.loaded/event.total*100),level});
-      });
+      };
+      const gltf = await loader.loadAsync(modelUrl.href, progress);
       if(dead) {release(gltf.scene); return;}
       const next = gltf.scene;
       next.traverse(obj => {
@@ -130,7 +133,12 @@ export function createStudio(container, report) {
       if(activeState) apply(activeState, activeLight);
       report({loading:false,quality:level});
     } catch(error) {
-      report({loading:false,error:model ? 'Could not load the detail model. Your current model is still available.' : 'Could not load the controller. Check your connection and reload.',quality});
+      const missing = error.response?.status === 404 || /\b404\b/.test(error.message || '');
+      const name = {original:'Original',high:'High Definition',low:'Low Definition'}[level] || 'Controller';
+      const message = missing
+        ? `${name} model file was not found (404). The site may be updating. Retry or choose another model.`
+        : `${name} could not be downloaded or opened. Retry, or try Low Definition for a smaller download.`;
+      report({loading:false,error:message+(model?' Your current model is still available.':''),quality});
       console.error(error);
     } finally {busy = false;}
   }

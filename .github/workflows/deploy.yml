@@ -24,10 +24,15 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Assemble the same layout used by branch hosting
+        run: |
+          mkdir -p .pages
+          cp index.html 404.html .nojekyll .pages/
+          cp -R docs .pages/docs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: .pages
       - name: Publish
         id: deployment
         uses: actions/deploy-pages@v4

@@ -45,7 +45,7 @@ Original is converted directly from `assets/original/source/model/model.dae` and
 
 Production output is written to `docs/` and included in the repository. With branch-based GitHub Pages, the repository-root entry redirects to `docs/`, so visitors receive the compiled app rather than Vue source. Directly serving `docs/` also works. Vite removes the redirect from development and production app HTML to avoid redirect loops.
 
-The included GitHub Actions workflow builds and deploys `docs/` to GitHub Pages on pushes to `main`, or through a manual workflow run. Repositories using this workflow must select **GitHub Actions** as their Pages deployment source.
+The included GitHub Actions workflow builds `docs/` and publishes it with the root redirect and 404 page, matching the branch-hosted layout. This keeps model paths consistent whichever deployment runs last. It runs on pushes to `main` or through a manual workflow run. Repositories using this workflow must select **GitHub Actions** as their Pages deployment source.
 
 The HTML includes its own dark startup and failure screen, independent of the JavaScript bundle. A standalone dark 404 page is included as well.
 
