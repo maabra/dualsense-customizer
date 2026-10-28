@@ -75,7 +75,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(detail!=='low'){
     const mobile=detail.endsWith('-mobile');
     canvas.width=button?(mobile?512:1024):(mobile?2048:4096);
-    canvas.height=button?1024:Math.round(canvas.width*(touch?552/1024:998/1536));
+    canvas.height=button?canvas.width:Math.round(canvas.width*(touch?552/1024:998/1536));
   }
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
   const metal=id==='wolverine-metal',wolverine=id.startsWith('wolverine');
@@ -137,7 +137,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
     return canvas;
   }
   if(additionalEditions.has(id)) {drawCatalogArtwork(ctx,id,group,w,h);return canvas;}
-  if(drawTracedArtwork(ctx,id,group,w,h))return canvas;
+  if(!id.startsWith('astro')&&drawTracedArtwork(ctx,id,group,w,h))return canvas;
   if(group==='rear') {
     // Factory lettering already exists in the original texture/normal set.
     // A second planar label would duplicate it and stretch across the top bevel.
@@ -203,17 +203,19 @@ export function createEditionCanvas(id,part,group,detail='low') {
       ctx.fillStyle='#55c7fb';
       if(id==='astro-joyful') {
         ctx.fillStyle='#5ed3ff';
-        for(const x of [.32,.68])for(let dx=-.078;dx<=.078;dx+=.012)for(const row of [-1,0,1]){
-          const y=.39+Math.abs(dx)/.078*.16+row*.016;ctx.beginPath();ctx.arc(w*(x+dx),h*y,h*.0055,0,Math.PI*2);ctx.fill();
+        for(const x of [.32,.68])for(let dx=-.125;dx<=.125;dx+=.022)for(let dy=-.16;dy<=.16;dy+=.039){
+          // Filled, rounded smiling eyes with a curved cutout underneath.
+          if((dx/.125)**2+(dy/.16)**2>1||dy>.055-.045*(1-(dx/.125)**2))continue;
+          ctx.beginPath();ctx.arc(w*(x+dx),h*(.46+dy),h*.014,0,Math.PI*2);ctx.fill();
         }
       }
       else for(const x of [.33,.67]) {
         const radius=h*.22;
         for(let dy=-radius;dy<=radius;dy+=h*.024)for(let dx=-radius;dx<=radius;dx+=h*.024)
-          if(dx*dx+dy*dy<radius*radius){ctx.beginPath();ctx.arc(w*x+dx,h*.48+dy,h*.0055,0,Math.PI*2);ctx.fill();}
+          if((dx/(radius*.65))**2+(dy/radius)**2<1){ctx.beginPath();ctx.arc(w*x+dx,h*.48+dy,h*.008,0,Math.PI*2);ctx.fill();}
       }
     }
-    if(group==='shell') {
+    if(group==='shell'&&!drawTracedArtwork(ctx,id,group,w,h)) {
       for(const side of [-1,1]){
         const x=side<0?w*.07:w*.82;
         ctx.save();if(side>0){ctx.translate(w,0);ctx.scale(-1,1);}

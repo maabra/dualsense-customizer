@@ -42,25 +42,45 @@ jobs={
  'yotei-gold-rear':('../audit/yotei-gold-rear.jpg',800,785,640,'yotei-gold-rear'),
 }
 result={}
+jobs['lebron']=('../hires/lebron-front.jpg',750,493,450,'lebron')
+jobs['lebron-pad']=jobs['lebron'][:-1]+('lebron-pad',)
 for key,(filename,cx,cy,scale,mode) in jobs.items():
+ # These manufacturer renders have identical framing at 2.4x the original
+ # resolution. Scale calibration as well as the image; never enlarge old paths.
+ high=root/'assets/references/hires'/Path(filename).name
+ if key in ['marathon','lisa','deathstranding','yotei-black','camo'] and high.exists():
+  filename=str(high);cx*=2.4;cy*=2.4;scale*=2.4
  raw=cv2.imread(str(folder/filename),cv2.IMREAD_UNCHANGED);im=raw[:,:,:3];source_alpha=raw[:,:,3]>200 if raw.shape[2]==4 else np.ones(raw.shape[:2],dtype=bool)
+ if key in ['helldivers','helldivers-pad']:
+  # Register the clean product render to the established plate landmarks.
+  # The older promotional shot obscured the hatching and tiny control labels.
+  clean=cv2.imread(str(root/'assets/references/hires/helldivers-front.jpg'))
+  if clean is not None:
+   yy,xx=np.indices(im.shape[:2],dtype=np.float32)
+   mx=(xx-1282)*(900/420)+951
+   my=(yy-443)*np.where(yy<443,840/330,923/550)+720
+   im=cv2.remap(clean,mx.astype(np.float32),my.astype(np.float32),cv2.INTER_CUBIC,borderMode=cv2.BORDER_CONSTANT,borderValue=(255,255,255))
  hsv=cv2.cvtColor(im,cv2.COLOR_BGR2HSV);gray=cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
  layers=[]
  def add(mask,color,maximum=None):
   contours,_=cv2.findContours(mask.astype(np.uint8)*255,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
   paths=[]
   for c in contours:
-   if cv2.contourArea(c)<2:continue
+   if mode=='camo' and cv2.contourArea(c)<12:continue
+   # Retain tiny letter counters, brush scratches and hatch marks. A long
+   # hairline may have almost no area and still be a meaningful printed detail.
+   if cv2.contourArea(c)<.5 and cv2.arcLength(c,True)<4:continue
    if maximum is not None and cv2.contourArea(c)>maximum:continue
-   points=cv2.approxPolyDP(c,.6,True)[:,0]
+   points=cv2.approxPolyDP(c,.6 if mode=='camo' else .3,True)[:,0]
    if mode.endswith('-pad'):
     corners={'spiderman-pad':[[670,185],[1070,185],[1045,365],[705,365]],'lastofus-pad':[[1050,263],[1383,263],[1358,408],[1090,408]],'helldivers-pad':[[1110,238],[1448,238],[1413,378],[1141,378]],'concord-pad':[[713,132],[960,132],[929,242],[744,242]],'lebron-pad':[[184,122],[395,121],[378,237],[203,237]]}[mode]
+    if mode=='lebron-pad':corners=[[568,212],[930,212],[898,401],[603,401]]
     homography=cv2.getPerspectiveTransform(np.float32(corners),np.float32([[-.405,.642],[.405,.642],[.33,.205],[-.33,.205]]))
     world=cv2.perspectiveTransform(points.astype(np.float32)[None],homography)[0]
    else:
-    up,down={'spiderman':(430,650),'lastofus':(341,580),'helldivers':(330,550),'concord':(290,430),'lebron':(253,280),'yotei-gold':(488,510)}.get(mode,(scale,scale))
+    up,down={'spiderman':(430,650),'lastofus':(341,580),'helldivers':(330,550),'concord':(290,430),'lebron':(447,457),'yotei-gold':(488,510)}.get(mode,(scale,scale))
     world=np.array([[(float(x)-cx)/scale,(cy-float(y))/(up if y<cy else down)] for x,y in points])
-   paths.append([[round(float(x),4),round(float(y),4)] for x,y in world])
+   paths.append([[round(float(x),5),round(float(y),5)] for x,y in world])
   layers.append({'color':color,'paths':paths})
  if mode=='hogwarts':
   add((hsv[:,:,0]>12)&(hsv[:,:,0]<45)&(hsv[:,:,1]>40)&(hsv[:,:,2]>70),'#baa05c')
@@ -174,6 +194,9 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   delta=cv2.GaussianBlur(gray,(0,0),7).astype(float)-gray.astype(float)
   add((delta>11)&(gray<170),'#806b40')
  elif mode=='camo':
+  # Separate the four printed patches from JPEG grain and photographed plastic
+  # stippling; those surface details belong to the model's normal map.
+  gray=cv2.bilateralFilter(gray,7,24,5)
   for lo,hi,color in [(0,53,'#35343a'),(53,80,'#4d4c54'),(80,105,'#62626a'),(105,140,'#77777c')]:add((gray>=lo)&(gray<hi),color)
  else:
   add(gray<105,'#24262a')
@@ -194,5 +217,18 @@ if logo_path.exists():
   points=cv2.approxPolyDP(contour,.4,True)[:,0]
   paths.append([[round((float(x)-(x0+x1)/2)*scale,5),round(.39-(float(y)-(y0+y1)/2)*scale,5)] for x,y in points])
  result['godofwar-rear']=[{'color':'#a9b0bd','paths':paths}]
+# Astro's blue grip panels are molded regions, not generic side stripes.
+astro=cv2.imread(str(root/'assets/references/hires/astro-joyful-front.jpg'))
+if astro is not None:
+ hsv=cv2.cvtColor(astro,cv2.COLOR_BGR2HSV);yy,xx=np.indices(hsv.shape[:2])
+ mask=np.uint8((hsv[:,:,0]>100)&(hsv[:,:,0]<125)&(hsv[:,:,1]>120)&((xx<220)|(xx>980))&(yy>195))*255
+ # A specular streak is lighting, not a white slit in the molded blue panel.
+ mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((19,19),np.uint8))
+ paths=[]
+ for c in cv2.findContours(mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)[0]:
+  if cv2.contourArea(c)<3000:continue
+  points=cv2.approxPolyDP(c,.2,True)[:,0]
+  paths.append([[round((float(x)-600)/600,5),round((383-float(y))/(590 if y<383 else 600),5)] for x,y in points])
+ for edition in ['astro','astro-joyful']:result[edition]=[{'color':'#1260cf','paths':paths}]
 (root/'src/catalog-traces.json').write_text(json.dumps(result,separators=(',',':')),encoding='utf-8')
 print('Extracted',len(result),'reference layouts')

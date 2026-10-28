@@ -483,5 +483,55 @@
     ],
     "pipeline": "Separate vector relief/color/finish maps share native UV charts. Relief perturbs original normals rather than replacing them.",
     "limits": "Reference-derived estimates; not a factory texture set or measurement of variant-specific geometry."
-  }
+  },
+  "highResolutionReferencePass": [
+    {
+      "file": "marathon-front.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-01-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "file": "deathstranding-front.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-01-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "file": "yotei-black-front.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY01_Black-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "file": "lisa-front.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-01-16x9-01-08aug26-_en?wid=3840&fmt=png-alpha",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "file": "camo-front.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GrayCamo01-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "width": 3840,
+      "height": 2160
+    },
+    {
+      "file": "lebron-front.jpg",
+      "url": "https://m.media-amazon.com/images/I/719B-o3q7PL._SL1500_.jpg",
+      "width": 1500,
+      "height": 1000
+    },
+    {
+      "file": "helldivers-front.jpg",
+      "url": "https://cdn.comfy.ua/media/catalog/product/d/s/dswc_le_hd2_rndr_lt_prod_rgb_eas_241202_1_.jpg",
+      "width": 1903,
+      "height": 1441
+    },
+    {
+      "file": "astro-joyful-front.jpg",
+      "url": "https://resources.budgetgaming.nl/boxarts/134189_kopen_1200x846.jpg",
+      "width": 1200,
+      "height": 846
+    }
+  ]
 }

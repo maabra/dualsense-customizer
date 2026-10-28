@@ -35,9 +35,9 @@ export function createEditionReliefCanvas(artwork,id,group){
 }
 function path(ctx,points,color,width=2){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();}
 function contour(ctx,points) {
- if(points.length<8){points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();return;}
- const last=points.at(-1),first=points[0];ctx.moveTo((last[0]+first[0])/2,(last[1]+first[1])/2);
- for(let i=0;i<points.length;i++){const p=points[i],next=points[(i+1)%points.length];ctx.quadraticCurveTo(p[0],p[1],(p[0]+next[0])/2,(p[1]+next[1])/2);}
+ // Preserve the traced outline. Midpoint smoothing rounded small lettering,
+ // closed brush scratches and changed the artwork at every sharp corner.
+ points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
  ctx.closePath();
 }
 
