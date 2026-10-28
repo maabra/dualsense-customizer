@@ -1,6 +1,6 @@
 # Authentic edition assets
 
-The configurator ships with the provided default DualSense models and their original embedded textures. Eight edition entries now include hand-drawn artwork recreations; all other editions remain color previews. Neither mode is an exact official replica. No AI-generated controller artwork is used. The separate UI part icons are image-generated. The catalog is extensible and does not claim to include every promotional or regional release.
+The configurator ships with the provided default DualSense models and their original embedded textures. All 24 listed edition entries include artwork approximations. Their fidelity varies: some layouts are photo-traced, while complex illustrations are simplified. These are not exact official replicas. No AI-generated controller artwork is used. The separate UI part icons are image-generated. The catalog is extensible and does not claim to include every promotional or regional release.
 
 ## Recreated artwork
 
@@ -55,3 +55,17 @@ Wolverine claw paint and visible scratch contours are traced from an official fr
 Rubber sticks, matte rear plastic, glossy button caps, painted touchpads, and metallic trim use separate physical material profiles. Wolverine painted claw regions have a different roughness from their substrate. Surface values are artistic estimates, not measurements. The supplied normal maps remain intact.
 
 The inspected front, top, oblique, and rear image URLs and known limitations are recorded in [texture-references.json](./texture-references.json). Some logos and the Spider-Man/Ragnarok illustrations remain simplified; this project does not claim microscopic accuracy. See [RIGHTS.md](./RIGHTS.md) for ownership, attribution and the testing-purpose notice.
+
+## Full catalog coverage
+
+All 24 current catalog entries support whole-controller or individual-part selection. The new Whole controller option applies a standard color, custom color, edition, or base finish across all 25 selectable parts. The light bar remains independent. Individual parts can then be changed separately.
+
+Nine additional front layouts use deterministic flat-color contour extraction from inspected official product photographs: Final Fantasy XVI, Marathon, LISA, 007 First Light, Death Stranding 2, Ghost of Yotei Black, Gray Camouflage, and both GTA VI variants. The extractor is `scripts/trace-catalog.py`. It removes photographic lighting by isolating color regions or local contrast, then reconstructs flat-color contours; it does not recover factory UV maps. Calibration and extraction thresholds are recorded in the script. Original photographs are not shipped as texture maps.
+
+Hogwarts Legacy, LeBron James, Concord, Fortnite, Helldivers 2, The Last of Us, and Ghost of Yotei Gold have simplified graphic interpretations. Their fine lettering, character illustrations, exact brushwork, and unseen rear art are not authenticated replicas. Existing Astro, Spider-Man and Ragnarok limitations still apply. Color-only placeholders have been replaced, but this does not mean every design has equal fidelity.
+
+### Finish regions
+
+Wolverine's gray/silver scratch regions use a reflective metallic response against the matte charcoal substrate. Yellow print remains nonmetallic in Edition materials mode. Final Fantasy XVI, Hogwarts and Yotei Gold use metallic ink regions, while The Last of Us uses glossier print on matte plastic. LISA has a subtle iridescent pearl substrate, 007 uses a gold metallic front, and Concord retains a matte base. Values are artistic estimates from references, not measured material scans.
+
+For these mapped print editions, **Artwork finish** overrides the print separately from the **Finish** of the underlying part. **Edition materials** restores the mixed print finish. Both overrides are saved in local builds and share links. The controls preserve the model's normal maps. Factory micro-embossing, transparent claw windows, measured anisotropy and exact ink thickness have not been reconstructed.

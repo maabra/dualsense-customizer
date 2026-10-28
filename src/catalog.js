@@ -23,7 +23,7 @@ export const groups = {
   sticks:['stick-left','stick-right'], triggers:['l1','r1','l2','r2'],
 };
 export const parentPart = part => Object.keys(groups).find(key=>groups[key].includes(part)) || part;
-export const targetsFor = part => groups[part] || [part];
+export const targetsFor = part => part==='all'?advancedParts.map(([key])=>key):groups[part] || [part];
 export const defaultId = part => ['trim','sticks','triggers','ps'].includes(parentPart(part)) ? 'black' : 'white';
 const color = (id, name, hex, finish = 'matte') => ({ id, name, hex, finish, type: 'standard' });
 const edition = (id, name, hex, accent = '#202126', finish = 'satin') => ({ id, name, hex, accent, finish, type: 'edition', texture: null });

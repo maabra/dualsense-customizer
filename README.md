@@ -20,7 +20,7 @@ Switching between Grouped parts and Individual parts preserves each piece's sett
 
 ## Asset status
 
-The default controller uses the supplied model and its original textures. Eight edition entries include hand-drawn artwork recreations: Gran Turismo, Wolverine Battle Yellow and Adamantium, 30th Anniversary, Astro Bot and Joyful, Marvel’s Spider-Man 2, and God of War Ragnarök. These are approximate recreations based on official product references, not extracted official texture maps. Other edition entries remain explicitly labeled color previews. The catalog does not claim to cover every regional or promotional release.
+The default controller uses the supplied model and its original textures. All 24 listed edition entries include reference-based artwork approximations. Wolverine and nine additional layouts use photo-derived contours; complex character illustrations and some logos remain simplified. These are not extracted official texture maps. See the asset documentation for per-edition accuracy limits. The catalog does not claim to cover every regional or promotional release.
 
 Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
 
@@ -82,6 +82,10 @@ python scripts/prepare_original.py
 The original-model conversion requires Python's Pillow package. Its image processing only packs source material channels and converts texture orientation; it does not synthesize artwork.
 
 Older shared builds using grouped selections are migrated to the individual-part format when opened.
+
+## Whole-controller appearance
+
+Choose **Whole controller** in Customize to apply a color, limited-edition appearance, or finish across every part, then adjust individual pieces. All 24 listed editions include artwork approximations, with fidelity varying by reference quality. Mapped editions also offer an independent **Artwork finish**, including metallic print against a matte shell. See [asset documentation](public/ASSETS.md) for the reference methods and known differences.
 
 ## Credits
 

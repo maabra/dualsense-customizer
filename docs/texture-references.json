@@ -147,6 +147,75 @@
     "Front, top, oblique and rear photographs cannot reveal exact production UVs, microscopic molded patterns, print thickness or measured roughness.",
     "Wolverine claws and visible scratches are photo-traced; other motifs and logos remain simplified.",
     "No invented serial numbers or unreadable regulatory text. Existing model normals remain in use; these are not measured edition-specific normal maps.",
-    "All eight entries are experiments, not authenticated replicas."
-  ]
+    "All 24 entries are experiments, not authenticated replicas."
+  ],
+  "additionalCatalogReferences": {
+    "pages": {
+      "ff16": "https://blog.ja.playstation.com/2023/04/27/20230427-ff16/",
+      "lebron": "https://blog.playstation.com/2023/03/01/playstation-and-lebron-james-team-up-on-limited-edition-playstation-5-accessories/",
+      "fortnite": "https://blog.playstation.com/?p=396503",
+      "helldivers": "https://blog.playstation.com/?p=399483",
+      "lastofus": "https://blog.playstation.com/?p=402444"
+    },
+    "images": [
+      {
+        "url": "https://blog.ja.playstation.com/tachyon/sites/7/2023/04/42f907548017a0b490f746d563fb7463bb9d728b.jpg",
+        "file": "ff16-7.jpg"
+      },
+      {
+        "url": "https://blog.playstation.com/tachyon/2023/03/77e5f6c6f85d2c28ece6f318e47fde9975f5811d.jpg",
+        "file": "lebron-5.jpg"
+      },
+      {
+        "url": "https://blog.playstation.com/tachyon/2024/09/612bbb54640ead8c32c5c72d56184d21db599f80.jpg",
+        "file": "fortnite-5.jpg"
+      },
+      {
+        "url": "https://blog.playstation.com/tachyon/2024/12/cc7fa5f70e8fcf6cd58da78dc5a4bf80f4a76292.jpg",
+        "file": "helldivers-15.jpg"
+      },
+      {
+        "url": "https://blog.playstation.com/tachyon/2025/03/347c097aca931d60f3998431277bea9a065b7aaf.jpg",
+        "file": "lastofus-0.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-01-16x9-01-28feb26$en?wid=1600",
+        "file": "marathon-front.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-01-16x9-01-28feb26$en?wid=1600",
+        "file": "deathstranding-front.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY01_Black-16x9-01-28feb26$en?wid=1600",
+        "file": "yotei-black-front.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-LE-FirstLight-PR-01-16x9-01-7apr26$en?wid=1600",
+        "file": "007-front.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-01-16x9-01-08aug26-_en?wid=1600",
+        "file": "lisa-front.jpg"
+      },
+      {
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GrayCamo01-16x9-01-28feb26$en?wid=1600",
+        "file": "camo-front.jpg"
+      },
+      {
+        "file": "gallery-16.jpg",
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-GTA6-PR-01-BLAC-16x9-01-21aug26-_en"
+      },
+      {
+        "file": "gallery-21.jpg",
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-GTA6-PR-01-W-16x9-01-21aug26-_en"
+      }
+    ],
+    "method": "Nine reference contour layouts; seven simplified illustrations. See ASSETS.md for the per-edition limitations.",
+    "otherDesignSources": {
+      "hogwarts": "https://www.playstation.com/en-gb/local/play-with-the-champions/",
+      "concord": "https://www.gamespot.com/articles/sonys-new-limited-edition-ps5-controller-is-its-best-looking-one-so-far/1100-6525289/",
+      "yotei-gold": "https://blog.playstation.com/2025/07/10/first-look-ps5-ghost-of-yotei-limited-edition-console-designs/"
+    }
+  }
 }

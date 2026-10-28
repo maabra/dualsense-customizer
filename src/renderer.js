@@ -147,6 +147,7 @@ export function createStudio(container, report) {
         material.userData.blend = {value:0};
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
         material.userData.paintFinish={value:0};
+        material.userData.printOverride={value:new THREE.Vector2(-1,-1)};
         // Clear button caps need their original alpha to reveal the symbols below.
         material.transparent = ['buttons','dpad','details'].includes(group);
         material.depthWrite = !['buttons','dpad'].includes(group);
@@ -190,12 +191,27 @@ export function createStudio(container, report) {
           // Printed claw paint catches a different highlight from its matte substrate.
           // Apply only when the edition finish is selected; manual finish overrides win.
           shader.uniforms.studioPaintFinish=material.userData.paintFinish;
-          shader.fragmentShader='uniform float studioPaintFinish;\n'+shader.fragmentShader;
+          shader.uniforms.studioPrintOverride=material.userData.printOverride;
+          shader.fragmentShader='uniform float studioPaintFinish;\nuniform vec2 studioPrintOverride;\n'+shader.fragmentShader;
           shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
             vec3 paint=texture2D(studioArtwork,vEditionUV).rgb;
-            float paintMask=studioArtworkEnabled*smoothstep(0.25,0.75,vEditionFacing)*studioPaintFinish;
-            float pigment=smoothstep(0.35,0.65,max(paint.r,max(paint.g,paint.b)));
-            roughnessFactor=mix(roughnessFactor,mix(0.67,0.32,pigment),paintMask);
+            float paintMask=studioArtworkEnabled*smoothstep(0.25,0.75,vEditionFacing)*step(0.5,studioPaintFinish);
+            float brightest=max(paint.r,max(paint.g,paint.b));
+            float saturation=brightest-min(paint.r,min(paint.g,paint.b));
+            float silverInk=(1.0-smoothstep(0.02,0.07,saturation))*smoothstep(0.035,0.075,brightest);
+            float pigment=smoothstep(0.035,0.12,brightest);
+            float printMetal=0.78*silverInk;
+            float printRough=mix(mix(0.67,0.36,pigment),0.23,silverInk);
+            if(studioPaintFinish>1.5&&studioPaintFinish<2.5){
+              pigment=smoothstep(0.045,0.12,brightest)*step(paint.b*1.25,paint.r);
+              printMetal=0.72;printRough=0.28;paintMask*=pigment;
+            }
+            if(studioPaintFinish>2.5){printMetal=0.0;printRough=0.19;paintMask*=smoothstep(0.022,0.05,brightest);}
+            if(studioPrintOverride.x>=0.0){printRough=studioPrintOverride.x;printMetal=studioPrintOverride.y;if(studioPaintFinish<1.5)paintMask*=pigment;}
+            roughnessFactor=mix(roughnessFactor,printRough,paintMask);
+          `);
+          shader.fragmentShader=shader.fragmentShader.replace('#include <metalnessmap_fragment>',`#include <metalnessmap_fragment>
+            metalnessFactor=mix(metalnessFactor,printMetal,paintMask);
           `);
         };
       });
@@ -238,7 +254,13 @@ export function createStudio(container, report) {
       m.clearcoat=surface?.clearcoat||(finish==='gloss'?.55:0);
       m.clearcoatRoughness=.25;
       if(surface){m.roughness=surface.roughness;m.metalness=surface.metalness;}
-      m.userData.paintFinish.value=surface&&entry?.id.startsWith('wolverine')&&['shell','touchpad'].includes(group)?1:0;
+      const printed=['shell','touchpad'].includes(group)&&!upload;
+      const printStyle=entry?.id.startsWith('wolverine')?1:['ff16','hogwarts','yotei-gold'].includes(entry?.id)?2:entry?.id==='lastofus'?3:0;
+      m.userData.paintFinish.value=printed?printStyle:0;
+      const printFinish={matte:[.8,0],satin:[.4,0],metallic:[.23,.8],gloss:[.14,0]}[selection.printFinish];
+      m.userData.printOverride.value.set(...(printFinish||[-1,-1]));
+      m.iridescence=entry?.id==='lisa'&&selection.finish==='original'&&['shell','trim'].includes(group)?.35:0;
+      m.iridescenceIOR=1.3;m.iridescenceThicknessRange=[140,360];
       m.roughnessMap = native && selection.finish === 'original' ? m.userData.originalRoughnessMap : null;
       m.needsUpdate = true;
     });
