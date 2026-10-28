@@ -84,7 +84,7 @@ onBeforeUnmount(()=>{observer?.disconnect();query?.removeEventListener('change',
  #panel.drawer-dragging{user-select:none;will-change:top,height}
  #sheet-toggle{min-height:44px;touch-action:none;cursor:grab;padding:9px 20px 6px;justify-content:center}
  #panel.drawer-dragging #sheet-toggle{cursor:grabbing}
- #sheet-toggle .sheet-label{font-size:10px;line-height:1.2;color:#94a9c4}
+ #sheet-toggle .sheet-label{display:block;font-size:10px;line-height:1.2;color:#94a9c4}
  #panel.drawer-collapsed .panel-scroll,#panel.drawer-collapsed .panel-footer{display:none}
  #panel .studio-nav button{min-height:48px}
  #panel .panel-navigation>#reset{width:44px;height:44px}

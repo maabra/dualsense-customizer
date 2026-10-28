@@ -35,6 +35,7 @@ function createStudio(container, report) {
   renderer.toneMappingExposure = .95;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   container.appendChild(renderer.domElement);
   renderer.domElement.setAttribute('aria-label', '3D DualSense controller. Left drag to rotate, right drag to move, scroll to zoom. On touch screens use two fingers to move and zoom.');
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -42,13 +43,28 @@ function createStudio(container, report) {
   controls.enablePan = true;
   controls.screenSpacePanning = true;
   controls.panSpeed = .75;
+  controls.zoomSpeed = 1.5;
   controls.mouseButtons = {LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN};
   controls.touches = {ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
   controls.minDistance = .75;
   controls.maxDistance = 24;
-  controls.zoomToCursor = true;
+  controls.zoomToCursor = false;
   controls.autoRotateSpeed = .7;
   controls.target.set(0, -.05, 0);
+  // OrbitControls boosts ctrl+wheel (trackpad pinch) by 10x; normalize all wheel input here.
+  function handleWheel(event) {
+    if(!controls.enabled||!controls.enableZoom)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    transition=null;
+    const delta=THREE.MathUtils.clamp(event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?100:1),-120,120);
+    const offset=camera.position.clone().sub(controls.target);
+    const distance=THREE.MathUtils.clamp(offset.length()*Math.exp(delta*.0008),controls.minDistance,controls.maxDistance);
+    camera.position.copy(controls.target).add(offset.setLength(distance));
+    controls.update();
+    needsRender=true;
+  }
+  renderer.domElement.addEventListener('wheel',handleWheel,{passive:false,capture:true});
   let inspecting=false,needsRender=true;
   controls.addEventListener('change',()=>{
     const distance=camera.position.distanceTo(controls.target),next=distance<3.6||distance>6.5;
@@ -113,7 +129,7 @@ function createStudio(container, report) {
     const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
       const detail=quality!=='low'&&mobile?quality+'-mobile':quality;
-      const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail,renderer.capabilities.maxTextureSize):createControlCanvas(entry.hex,part,group,detail);
+      const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail):createControlCanvas(entry.hex,part,group,detail);
       if(!canvas){artworkCache.set(key,null);return null;}
       if(group==='buttons'){
         // The symbol is printed on its own insert layer. Keep the underlying
@@ -309,7 +325,7 @@ function createStudio(container, report) {
       }
       if(model) {pivot.remove(model); release(model);}
       uvBaker?.dispose();artworkCache.forEach(disposeBakedArtwork);artworkCache.clear();
-      model = next;buttonLabels=nextLabels;pivot.add(model);quality = level;uvBaker=createNativeUvBaker(renderer,model);
+      model = next;buttonLabels=nextLabels;pivot.add(model);renderer.shadowMap.needsUpdate=true;quality = level;uvBaker=createNativeUvBaker(renderer,model);
       if(activeState) apply(activeState, activeLight);
       report({loading:false,quality:level});
     } catch(error) {
@@ -418,6 +434,7 @@ function createStudio(container, report) {
     const direction = {front:new THREE.Vector3(0,.06,1),back:new THREE.Vector3(0,.06,-1),angle:new THREE.Vector3(1,.6,1.6)}[name].normalize();
     transition = {from:camera.position.clone(),to:controls.target.clone().add(direction.multiplyScalar(distance)),start:performance.now()};
     pivot.rotation.set(name === 'angle'?-.08:0,0,name==='angle'?-.09:0);
+    renderer.shadowMap.needsUpdate=true;
   }
   controls.addEventListener('start',()=>{transition=null;});
   function loop(now) {
@@ -455,7 +472,7 @@ function createStudio(container, report) {
     clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
     hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
-    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(disposeBakedArtwork);uvBaker?.dispose();emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
+    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();renderer.domElement.removeEventListener('wheel',handleWheel,true);controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(disposeBakedArtwork);uvBaker?.dispose();emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }
 </script>

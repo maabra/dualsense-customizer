@@ -3,4 +3,5 @@ dist/
 .pages/
 *.log
 artifacts/
-scripts/
+/scripts/
+/assets/
