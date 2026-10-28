@@ -10,7 +10,7 @@ import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog
 import { transferProgress } from './loading';
 import {createSurfaceCanvas} from './surface-artwork';
 import {createNativeUvBaker,disposeBakedArtwork} from './native-uv-baker';
-import {createEditionReliefCanvas} from './catalog-artwork';
+import {additionalEditions,catalogTracesReady,createEditionReliefCanvas,loadCatalogTraces} from './catalog-artwork';
 import { createEditionCanvas, createControlCanvas, createButtonSymbolCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 const container=ref(null),emit=defineEmits(['status']);
@@ -122,10 +122,22 @@ function createStudio(container, report) {
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
   const artworkCache=new Map();
-  let uvBaker,buttonLabels=new Map();
+  let uvBaker,buttonLabels=new Map(),catalogTracesLoad=null;
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
+  function loadSelectedCatalogArtwork(state){
+    if(catalogTracesReady()||catalogTracesLoad||!Object.values(state).some(selection=>additionalEditions.has(selection.id)))return;
+    catalogTracesLoad=loadCatalogTraces().then(()=>{
+      catalogTracesLoad=null;
+      if(!dead&&activeState)apply(activeState,activeLight);
+    }).catch(error=>{
+      catalogTracesLoad=null;
+      report({error:'Edition artwork could not be loaded. Check your connection and try again.'});
+      console.error(error);
+    });
+  }
   function artworkFor(entry,part,group) {
     if(!entry||entry.artwork!=='recreated'&&!['buttons','dpad'].includes(group))return null;
+    if(additionalEditions.has(entry.id)&&!catalogTracesReady())return null;
     const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
       const detail=quality!=='low'&&mobile?quality+'-mobile':quality;
@@ -340,6 +352,7 @@ function createStudio(container, report) {
   }
   function apply(state, light = '#0072ff') {
     activeState = state;activeLight = light;needsRender=true;
+    loadSelectedCatalogArtwork(state);
     for(const [part,label] of buttonLabels){
       const selection=state[part];if(!selection)continue;
       label.mesh.visible=!uploads.has(part);

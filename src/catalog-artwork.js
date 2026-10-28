@@ -1,8 +1,18 @@
-import traces from './catalog-traces.json';
+import tracesUrl from './catalog-traces.json?url';
 import {drawFf16Artwork} from './ff16-artwork';
 import {drawGtaArtwork,gtaColor,gtaSurface} from './gta-artwork';
 
 export const additionalEditions=new Set(['ff16','hogwarts','lebron','concord','fortnite','helldivers','lastofus','deathstranding','yotei-gold','yotei-black','marathon','007','gta-black','gta-white','lisa','camo','genshin','monsterhunter','gow20','iconblue']);
+let traces={},tracesLoaded=false,tracesPromise;
+export function catalogTracesReady(){return tracesLoaded;}
+export function loadCatalogTraces(){
+ if(tracesLoaded)return Promise.resolve();
+ if(!tracesPromise)tracesPromise=fetch(tracesUrl).then(response=>{
+  if(!response.ok)throw new Error(`Edition artwork request failed (${response.status})`);
+  return response.json();
+ }).then(data=>{traces=data;tracesLoaded=true;}).catch(error=>{tracesPromise=null;throw error;});
+ return tracesPromise;
+}
 const black='#24262c',white='#e8e9e6';
 export function catalogPartColor(id,group,part) {
  const control=['buttons','dpad','sticks','triggers','trim','ps','create','options','mute'].includes(group);

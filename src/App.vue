@@ -11,7 +11,7 @@
  </dialog>
  <main :class="{'panel-collapsed':panelCollapsed}" :style="drawerStyle">
   <section id="stage" aria-label="Interactive 3D controller preview">
-   <ControllerViewport ref="canvasWrap" @status="report" />
+   <ControllerViewport v-if="viewportStarted" ref="canvasWrap" @status="report" />
    <button v-if="panelCollapsed" class="panel-reopen outline" aria-controls="panel" aria-expanded="false" @click="panelCollapsed=false">Show menu <span aria-hidden="true">›</span></button>
    <div id="loading" role="status" v-if="loading"><span class="spinner"></span><span id="loading-text">{{loadingLabel}}</span></div>
    <div v-if="fatalError" class="model-error" role="alert"><strong>Model unavailable</strong><p>{{fatalError}}</p><div class="model-error-actions"><button class="outline" @click="retry">Try again</button><button class="outline" @click="openModelChooser">Choose another model</button></div></div>
@@ -63,12 +63,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue';
 import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
-import ControllerViewport from './ControllerViewport.vue';
 import MobileDrawer from './MobileDrawer.vue';
 import StudioLogo from './StudioLogo.vue';
 import PartIcon from './PartIcon.vue';
+const ControllerViewport=defineAsyncComponent(()=>import('./ControllerViewport.vue'));
 
 const STORAGE = 'dualsense-studio-v1';
 const build = reactive(defaults());
@@ -96,9 +96,23 @@ const modelOptions = [
 const lightPresets=[{name:'Player 1',color:'#0072ff'},{name:'Player 2',color:'#ff334f'},{name:'Player 3',color:'#32d16d'},{name:'Player 4',color:'#ed69bb'},{name:'White',color:'#ffffff'}];
 const light = ref('#0072ff'), quality = ref('original'), loading = ref(false), loadingLabel = ref('Loading original model…');
 const activeModel=computed(()=>modelOptions.find(model=>model.id===quality.value));
-const chosenModel = ref('original'), modelDialog = ref(null), studioReady = ref(false);
+const chosenModel = ref('original'), modelDialog = ref(null), studioReady = ref(false), viewportStarted=ref(false);
 function openModelChooser() {chosenModel.value=quality.value;modelDialog.value?.showModal();}
-function startModel() {modelDialog.value?.close();studio?.load(chosenModel.value);}
+async function startModel() {
+  modelDialog.value?.close();
+  if(!studio) {
+    loading.value=true;loadingLabel.value='Starting 3D preview…';fatalError.value='';
+    pendingModel=chosenModel.value;
+    viewportStarted.value=true;
+    try {
+      await import('./ControllerViewport.vue');
+    } catch(error) {
+      pendingModel=null;viewportStarted.value=false;
+      loading.value=false;fatalError.value='The 3D preview could not be loaded. Check your connection and try again.';
+      console.error(error);return;
+    }
+  } else studio.load(chosenModel.value);
+}
 const expanded = ref(false), panelCollapsed = ref(false), rotating = ref(false), activeView = ref('angle'), toastText = ref(''), fatalError = ref('');
 const canvasWrap = ref(null), uploaded = reactive({});
 const views = [['front','Front'],['back','Rear'],['angle','Perspective']];
@@ -129,7 +143,17 @@ const standardColors = catalog.filter(c=>c.type==='standard');
 const editions = computed(()=>catalog.filter(c=>c.type==='edition' && c.name.toLowerCase().includes(search.value.toLowerCase())));
 const drawerPosition=ref(null);
 const drawerStyle=computed(()=>drawerPosition.value?.mobile?{'--preview-height':drawerPosition.value.top+'px','--preview-transition':drawerPosition.value.dragging?'none':'height .3s ease'}:{});
-let studio, toastTimer;
+let studio, toastTimer, pendingModel=null;
+watch(canvasWrap,viewport=>{
+  if(!viewport)return;
+  try {
+    studio=viewport.initialize();studio.apply(build,light.value);
+    if(pendingModel){const level=pendingModel;pendingModel=null;studio.load(level);}
+  } catch(error) {
+    pendingModel=null;loading.value=false;fatalError.value='Your browser could not start the 3D preview. Enable WebGL or try a different browser.';
+    console.error(error);
+  }
+},{flush:'post'});
 function notify(message) {toastText.value=message;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastText.value='',3500);}
 function snapshot() {return {version:2,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
 function restore(data) {
@@ -202,7 +226,11 @@ function report(status) {
   if(status.error) {if(!studioReady.value)fatalError.value=status.error;else notify(status.error);}
   else if(status.loading===false) {fatalError.value='';studioReady.value=true;}
 }
-function retry() {fatalError.value='';studio?.load(chosenModel.value);}
+async function retry() {
+  fatalError.value='';
+  if(studio){studio.load(chosenModel.value);return;}
+  viewportStarted.value=false;await nextTick();startModel();
+}
 watch([build,light],()=> {
   studio?.apply(build,light.value);
   try {localStorage.setItem(STORAGE,JSON.stringify(snapshot()));}catch{}
@@ -215,8 +243,7 @@ function loadHash() {
 onMounted(()=> {
   if(!loadHash()) {try {restore(JSON.parse(localStorage.getItem(STORAGE)));}catch{}}
   window.addEventListener('hashchange',loadHash);
-  try {studio=canvasWrap.value.initialize();studio.apply(build,light.value);modelDialog.value?.showModal();}
-  catch(error) {loading.value=false;fatalError.value='Your browser could not start the 3D preview. Enable WebGL or try a different browser.';console.error(error);}
+  modelDialog.value?.showModal();
 });
 onBeforeUnmount(()=> {clearTimeout(toastTimer);window.removeEventListener('hashchange',loadHash);document.body.classList.remove('sheet-expanded');});
 </script>
