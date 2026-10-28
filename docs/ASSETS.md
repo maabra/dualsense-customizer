@@ -1,6 +1,6 @@
 # Controller assets and reference accuracy
 
-DualSense Studio is an unofficial visual configurator. All 24 listed editions have SVG artwork masters; designs are reconstructed from product references and are not authenticated factory maps. No controller artwork is image-generated. The separate part-selector icons are image-generated.
+DualSense Studio is an unofficial visual configurator. All 28 listed editions have SVG artwork masters; designs are reconstructed from product references and are not authenticated factory maps. No controller artwork is image-generated. The separate part-selector icons are image-generated.
 
 ## Shared native-UV workflow
 
@@ -10,7 +10,7 @@ The original unwrap and geometry remain in use; this is not a newly measured pro
 
 ## Vector artwork
 
-The [SVG manifest](./artwork-vectors/manifest.json) lists resolution-independent masters for all 24 editions. They use paths, curves, primitives, gradients and vector text, with no embedded reference photographs. Masters are regenerated from the app's drawing code during builds.
+The [SVG manifest](./artwork-vectors/manifest.json) lists resolution-independent masters for all 28 editions. They use paths, curves, primitives, gradients and vector text, with no embedded reference photographs. Masters are regenerated from the app's drawing code during builds.
 
 Nineteen front layouts now use reference-derived contours: Gran Turismo, Spider-Man, Ragnarok, Final Fantasy XVI, Hogwarts Legacy, LeBron James, Concord, Fortnite, Helldivers, The Last of Us, Death Stranding 2, both Yotei variants, Marathon, 007, both GTA variants, LISA and Gray Camouflage. Both Wolverine variants share photo-derived claw/scratch contours. Astro's two eye expressions and circuit details, and Anniversary's colored control regions, use procedural vector geometry. Gran Turismo's touchpad stripes and safety/fastener graphics have been redrawn as clean vectors.
 

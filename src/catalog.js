@@ -60,6 +60,10 @@ export const catalog = [
   edition('gta-white', 'GTA VI · White', '#e7ded6', '#d1a09f'),
   edition('lisa', 'LISA', '#e3d9e1', '#9c7ea3'),
   edition('camo', 'Gray Camouflage', '#777c76', '#393d38'),
+  edition('genshin', 'Genshin Impact', '#eee9df', '#17566a'),
+  edition('monsterhunter', 'Monster Hunter Wilds', '#b70932', '#bfb9c2', 'metallic'),
+  edition('gow20', 'God of War · 20th Anniversary', '#dce0df', '#b6122a'),
+  edition('iconblue', 'Icon Blue', '#0950b8', '#1572e5'),
 ];
 export const byId = Object.fromEntries(catalog.map(x => [x.id, x]));
 for(const entry of catalog)if(recreatedEditions.has(entry.id))entry.artwork='recreated';

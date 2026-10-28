@@ -9,10 +9,12 @@ const traces=JSON.parse(await read('src/catalog-traces.json'));
 const referenceTraces=JSON.parse(await read('src/reference-traces.json'));
 const document={createElement:()=>new VectorCanvas()};
 const gta=new Function(moduleBody(await read('src/gta-artwork.js'))+';return {drawGtaArtwork,gtaColor,gtaSurface};')();
-const catalog=new Function('traces',...Object.keys(gta),'document',moduleBody(await read('src/catalog-artwork.js'))+';return {additionalEditions,catalogPartColor,drawCatalogArtwork,drawTracedArtwork,catalogEditionSurface,createEditionReliefCanvas};')(traces,...Object.values(gta),document);
+const ff16=new Function(moduleBody(await read('src/ff16-artwork.js'))+';return drawFf16Artwork;')();
+const catalog=new Function('traces',...Object.keys(gta),'drawFf16Artwork','document',moduleBody(await read('src/catalog-artwork.js'))+';return {additionalEditions,catalogPartColor,drawCatalogArtwork,drawTracedArtwork,catalogEditionSurface,createEditionReliefCanvas};')(traces,...Object.values(gta),ff16,document);
 // Fail the build instead of quietly publishing blank/invented replacement art.
 for(const key of [...catalog.additionalEditions,'gt','godofwar','spiderman','gta-relief','gta-rear-logo','godofwar-rear','concord-rear','lebron-pad','yotei-gold-rear']){
- if(!traces[key]?.some(layer=>layer.paths.length))throw new Error(`Missing reference vector layer: ${key}`);
+ const layers=traces[key]?.source?traces[traces[key].source]:traces[key];
+ if(!layers?.some(layer=>layer.paths.length))throw new Error(`Missing reference vector layer: ${key}`);
 }
 if(!referenceTraces.claws?.length)throw new Error('Missing Wolverine vector contours');
 const names=['referenceTraces',...Object.keys(catalog),'document'];

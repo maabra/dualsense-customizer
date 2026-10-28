@@ -1,6 +1,6 @@
 # Catalog visual audit
 
-This review covers all 24 current catalog appearances. Front render captures were checked across the catalog, with oblique/rear views checked where references were available. Both GTA variants were also exercised on Original. This record identifies concrete corrections; it is not a factory-authenticity certification.
+This review covers all 28 current catalog appearances. Front render captures were checked across the catalog, with oblique/rear views checked where references were available. Both GTA variants were also exercised on Original. This record identifies concrete corrections; it is not a factory-authenticity certification.
 
 | Edition | Review and corrective work |
 |---|---|
@@ -31,8 +31,19 @@ This review covers all 24 current catalog appearances. Front render captures wer
 
 The source record is in [texture-references.json](./texture-references.json). Material values and inferred relief remain estimates. Tiny unreadable print and unseen surfaces cannot be verified from these references. Original model geometry is shared across editions, so variant-specific physical construction is not asserted.
 
+## Product-reference corrections and catalog expansion
+
+FF XVI uses continuous vector geometry for the central seal, crystal wireframes, dotted borders and curved grip etching. The physical pad margin is retained. Independent perspective registration aligns touchpad artwork while retaining the shared native UV charts and finish maps. The Last of Us uses 3600-pixel official product plates for the trophy collage and rear wordmark, with pale shoulder controls and separate gloss print. LISA uses the Chroma Pearl coating beneath its artwork. Yōtei Gold separates pale dry-brush fibers from solid gold pigment.
+
+| Added edition | Appearance |
+| --- | --- |
+| Genshin Impact | Ivory shell, teal center/sticks/shoulders, gold and teal glyphs, pale grip markings and rear script with Paimon ornament. |
+| Monster Hunter Wilds | Volcanic red substrate, silver hunter costume filigree and emblem, darker red print, black center/sticks/shoulders and rear wordmark. |
+| God of War 20th Anniversary | Ash-white shell and center, scarlet tattoo, white controls with red glyphs, black sticks, red right shoulders and rear anniversary wordmark. |
+| Icon Blue | Layered blue parts, pale blue control glyphs, glossy touchpad shapes and reference-traced rear katakana. |
+
 ## Fine-detail pass
 
 Marathon, Death Stranding 2, LISA, Yotei Black and Gray Camouflage now use 3840-pixel manufacturer reference renders. LeBron uses a larger frontal product reference; Helldivers uses a clean frontal render registered to the existing plate. Astro grip panels are reference-traced and both eye patterns have been revised. All catalog contours retain small counters and sharp corners instead of midpoint smoothing. Gray Camouflage extraction suppresses photographed surface grain, leaving the supplied normal map responsible for plastic texture.
 
-These remain reconstructed artwork plates baked to the original model UV charts, not official production texture files. FF XVI, Hogwarts, Concord, The Last of Us and Yotei Gold retain source-resolution limits despite finer extraction. Edition finish maps are preserved; the mobile control canvas aspect ratio is corrected.
+Artwork plates are baked to the original model UV charts, with edition finish maps preserved. Touchpads use independent perspective registration from their physical boundaries. FF XVI's geometric linework is authored as continuous vectors, while The Last of Us uses the later full-resolution product reference set. Mobile control canvases retain square proportions.

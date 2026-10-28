@@ -20,7 +20,7 @@ Switching between Grouped parts and Individual parts preserves each piece's sett
 
 ## Asset status
 
-The default controller uses the supplied model and its original textures. All 24 listed edition entries include reference-based artwork approximations. Wolverine and fifteen other front layouts use photo-derived contours; complex character illustrations and some logos remain simplified. These are not extracted official texture maps. See the asset documentation for per-edition accuracy limits. The catalog does not claim to cover every regional or promotional release.
+The default controller uses the supplied model and its original textures. All 28 listed edition entries include reference-based artwork approximations. Wolverine and fifteen other front layouts use photo-derived contours; complex character illustrations and some logos remain simplified. These are not extracted official texture maps. See the asset documentation for per-edition accuracy limits. The catalog does not claim to cover every regional or promotional release.
 
 Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
 
@@ -85,15 +85,15 @@ Older shared builds using grouped selections are migrated to the individual-part
 
 ## Catalog review
 
-The [catalog audit](public/CATALOG-AUDIT.md) records visual corrections across the 24 listed editions. GTA variants include separate palm/VI relief and iridescent coatings; edition-specific material regions remain configurable.
+The [catalog audit](public/CATALOG-AUDIT.md) records visual corrections across the 28 listed editions. GTA variants include separate palm/VI relief and iridescent coatings; edition-specific material regions remain configurable.
 
 ## Vector artwork and shared mapping
 
-All 24 listed editions include [SVG artwork masters](public/artwork-vectors/manifest.json). Artwork and finish maps are baked into reusable charts from the supplied model?s original UV layout. Desktop Original/High artwork uses 4K maps; mobile sizes adapt to limit memory. Each edition retains its distinct material regions and independent artwork finish. SVG artwork remains a reference-based approximation.
+All 28 listed editions include [SVG artwork masters](public/artwork-vectors/manifest.json). Artwork and finish maps are baked into reusable charts from the supplied model?s original UV layout. Desktop Original/High artwork uses 4K maps; mobile sizes adapt to limit memory. Each edition retains its distinct material regions and independent artwork finish. SVG artwork remains a reference-based approximation.
 
 ## Whole-controller appearance
 
-Choose **Whole controller** in Customize to apply a color, limited-edition appearance, or finish across every part, then adjust individual pieces. All 24 listed editions include artwork approximations, with fidelity varying by reference quality. Mapped editions also offer an independent **Artwork finish**, including metallic print against a matte shell. See [asset documentation](public/ASSETS.md) for the reference methods and known differences.
+Choose **Whole controller** in Customize to apply a color, limited-edition appearance, or finish across every part, then adjust individual pieces. All 28 listed editions include artwork approximations, with fidelity varying by reference quality. Mapped editions also offer an independent **Artwork finish**, including metallic print against a matte shell. See [asset documentation](public/ASSETS.md) for the reference methods and known differences.
 
 ## Credits
 

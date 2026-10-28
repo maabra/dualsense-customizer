@@ -6,7 +6,7 @@ export const recreatedEditions = new Set(['anniversary','gt','wolverine-yellow',
 const neutral = '#24262c';
 export function editionPartColor(entry, part, group) {
   const id=entry.id;
-  if(additionalEditions.has(id))return catalogPartColor(id,group);
+  if(additionalEditions.has(id))return catalogPartColor(id,group,part);
   if(id.startsWith('wolverine')) {
     if(group==='ps')return id==='wolverine-yellow'?'#e8bd29':'#b7babf';
     if(group==='trim'||group==='sticks')return id==='wolverine-yellow'?'#f5c72d':group==='sticks'?'#24262c':'#aeb1b5';
@@ -86,13 +86,17 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(id==='spiderman')base=group==='buttons'?'#dfe2e8':'#17181d';
   if(id==='godofwar')base=['shell','rear'].includes(group)?'#35447c':['buttons','dpad'].includes(group)?'#252934':'#dee8ef';
   if(id==='anniversary')base=['buttons','dpad','ps','trim'].includes(group)?'#606875':'#a1a4ad';
-  if(additionalEditions.has(id))base=catalogPartColor(id,group);
+  if(additionalEditions.has(id))base=catalogPartColor(id,group,part);
   ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
   if(group==='buttons') {
     let ink=wolverine?(metal?'#b4b4b5':'#e1b62c'):id.startsWith('astro')?'#94c6dd':id==='spiderman'?'#6c747f':additionalEditions.has(id)?(['lisa','marathon','yotei-black','yotei-gold','gta-white'].includes(id)?'#747a83':'#74767e'):'#d8dce0';
     if(id==='anniversary')ink={'button-triangle':'#45b8a5','button-circle':'#e86b74','button-cross':'#76a3df','button-square':'#d48fba'}[part];
     if(id.startsWith('gta'))ink=id==='gta-white'?'#b18baa':'#b47d9f';
     if(id==='yotei-gold')ink='#b49a52';
+    if(id==='genshin')ink='#b79e6c';
+    if(id==='monsterhunter')ink='#d7c9d1';
+    if(id==='gow20')ink='#ad2334';
+    if(id==='iconblue')ink='#b8e6fa';
     faceSymbol(ctx,part,ink,w,h);return canvas;
   }
   if(group==='dpad') {
@@ -106,7 +110,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
     }
     if(!wolverine&&!id.startsWith('astro')) {
       ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);ctx.scale(w/256,h/256);
-      polygon(ctx,[[-18,-7],[18,-7],[0,-25]],id==='yotei-gold'?'#b49a52':id.startsWith('gta')?(id==='gta-white'?'#b8a4bb':'#b285a3'):id==='fortnite'?'#60869c':'#90949c');ctx.restore();
+      polygon(ctx,[[-18,-7],[18,-7],[0,-25]],id==='genshin'?'#b79e6c':id==='iconblue'?'#b8e6fa':id==='monsterhunter'?'#d7c9d1':id==='gow20'?'#ad2334':id==='yotei-gold'?'#b49a52':id.startsWith('gta')?(id==='gta-white'?'#b8a4bb':'#b285a3'):id==='fortnite'?'#60869c':'#90949c');ctx.restore();
     }
     return canvas;
   }
@@ -277,7 +281,11 @@ export function editionSurface(id,group) {
   if(group==='sticks')return {roughness:.88,metalness:0,clearcoat:0};
   if(group==='buttons'||group==='dpad')return {roughness:.25,metalness:0,clearcoat:.35};
   if(id==='007'&&['shell','rear'].includes(group))return {roughness:.34,metalness:.72,clearcoat:.18};
-  if(id==='lisa'&&['shell','trim','rear'].includes(group))return {roughness:.28,metalness:.18,clearcoat:.6};
+  if(id==='lisa'&&['shell','trim','rear'].includes(group))return {roughness:.13,metalness:.18,clearcoat:1};
+  if(id==='monsterhunter'&&['shell','rear'].includes(group))return {roughness:.32,metalness:.45,clearcoat:.4};
+  if(id==='genshin')return {roughness:.53,metalness:0,clearcoat:.06};
+  if(id==='gow20')return {roughness:.64,metalness:0,clearcoat:.02};
+  if(id==='iconblue')return {roughness:group==='trim'?.45:.63,metalness:0,clearcoat:.05};
   if(group==='rear')return {roughness:.72,metalness:0,clearcoat:0};
   if(id.startsWith('astro')&&group==='triggers')return {roughness:.2,metalness:0,clearcoat:.7};
   if(group==='touchpad')return {roughness:.56,metalness:0,clearcoat:.08};

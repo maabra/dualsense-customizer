@@ -44,12 +44,41 @@ jobs={
 result={}
 jobs['lebron']=('../hires/lebron-front.jpg',750,493,450,'lebron')
 jobs['lebron-pad']=jobs['lebron'][:-1]+('lebron-pad',)
+jobs['lastofus']=('../hires/tlou-4.jpg',1800,1188,1116,'lastofus')
+jobs['lastofus-pad']=jobs['lastofus'][:-1]+('lastofus-pad',)
+jobs['lastofus-rear']=('../hires/tlou-3.jpg',1800,1188,1116,'tlou-rear')
+jobs['gow20']=('../missing/gow20-product-1.jpg',1920,1068,1152,'gow20')
+jobs['gow20-rear']=('../missing/gow20-product-5.jpg',1920,1068,1152,'gow20-rear')
+jobs['monsterhunter']=('../missing/monsterhunter-0.jpg',960,535,576,'monsterhunter')
+jobs['genshin']=('../missing/genshin-product-0.jpg',500,329,304,'genshin')
+jobs['genshin-rear']=('../missing/genshin-rear.jpg',500,510,400,'genshin-rear')
+jobs['monsterhunter-rear']=('../missing/monsterhunter-rear.jpg',960,865,950,'monsterhunter-rear')
+jobs['iconblue']=('../missing/iconblue-0.jpg',1800,1188,1116,'iconblue')
+jobs['iconblue-rear']=('../missing/iconblue-4.jpg',1800,1188,1116,'iconblue-rear')
+pad_corners={
+ 'ff16':[[350,275],[650,275],[632,404],[368,404]],
+ 'hogwarts':[[679,154],[1222,154],[1170,426],[725,426]],
+ 'yotei-gold':[[298,86],[701,86],[670,301],[331,301]],
+ 'marathon':[[606,157],[994,157],[962,350],[638,350]],
+ 'lisa':[[606,157],[994,157],[962,350],[638,350]],
+ 'deathstranding':[[606,157],[994,157],[962,350],[638,350]],
+ 'yotei-black':[[606,157],[994,157],[962,350],[638,350]],
+ 'camo':[[606,157],[994,157],[962,350],[638,350]],
+ 'monsterhunter':[[722,179],[1194,179],[1150,411],[772,411]],
+ 'genshin':[[377,148],[623,148],[598,268],[402,268]],
+ 'iconblue':[[1357,533],[2243,533],[2146,962],[1454,962]],
+}
+for edition in pad_corners:jobs[edition+'-pad']=jobs[edition]
 for key,(filename,cx,cy,scale,mode) in jobs.items():
  # These manufacturer renders have identical framing at 2.4x the original
  # resolution. Scale calibration as well as the image; never enlarge old paths.
  high=root/'assets/references/hires'/Path(filename).name
- if key in ['marathon','lisa','deathstranding','yotei-black','camo'] and high.exists():
+ factor=1
+ if key.removesuffix('-pad') in ['marathon','lisa','deathstranding','yotei-black','camo'] and high.exists():
+  factor=2.4
   filename=str(high);cx*=2.4;cy*=2.4;scale*=2.4
+ if key in ['genshin','genshin-pad']:
+  filename=str(root/'assets/references/missing/genshin-front-hi.jpg');factor=3.6;cx*=factor;cy*=factor;scale*=factor
  raw=cv2.imread(str(folder/filename),cv2.IMREAD_UNCHANGED);im=raw[:,:,:3];source_alpha=raw[:,:,3]>200 if raw.shape[2]==4 else np.ones(raw.shape[:2],dtype=bool)
  if key in ['helldivers','helldivers-pad']:
   # Register the clean product render to the established plate landmarks.
@@ -61,7 +90,7 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
    my=(yy-443)*np.where(yy<443,840/330,923/550)+720
    im=cv2.remap(clean,mx.astype(np.float32),my.astype(np.float32),cv2.INTER_CUBIC,borderMode=cv2.BORDER_CONSTANT,borderValue=(255,255,255))
  hsv=cv2.cvtColor(im,cv2.COLOR_BGR2HSV);gray=cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
- layers=[]
+ layers=[];registration=[]
  def add(mask,color,maximum=None):
   contours,_=cv2.findContours(mask.astype(np.uint8)*255,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
   paths=[]
@@ -72,17 +101,40 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
    if cv2.contourArea(c)<.5 and cv2.arcLength(c,True)<4:continue
    if maximum is not None and cv2.contourArea(c)>maximum:continue
    points=cv2.approxPolyDP(c,.6 if mode=='camo' else .3,True)[:,0]
-   if mode.endswith('-pad'):
-    corners={'spiderman-pad':[[670,185],[1070,185],[1045,365],[705,365]],'lastofus-pad':[[1050,263],[1383,263],[1358,408],[1090,408]],'helldivers-pad':[[1110,238],[1448,238],[1413,378],[1141,378]],'concord-pad':[[713,132],[960,132],[929,242],[744,242]],'lebron-pad':[[184,122],[395,121],[378,237],[203,237]]}[mode]
+   if key.endswith('-pad'):
+    corners=pad_corners.get(key.removesuffix('-pad')) or {'spiderman-pad':[[670,185],[1070,185],[1045,365],[705,365]],'lastofus-pad':[[1050,263],[1383,263],[1358,408],[1090,408]],'helldivers-pad':[[1110,238],[1448,238],[1413,378],[1141,378]],'concord-pad':[[713,132],[960,132],[929,242],[744,242]],'lebron-pad':[[184,122],[395,121],[378,237],[203,237]]}[mode]
+    corners=(np.float32(corners)*factor).tolist()
     if mode=='lebron-pad':corners=[[568,212],[930,212],[898,401],[603,401]]
+    if mode=='lastofus-pad':corners=[[1357,533],[2243,533],[2146,962],[1454,962]]
     homography=cv2.getPerspectiveTransform(np.float32(corners),np.float32([[-.405,.642],[.405,.642],[.33,.205],[-.33,.205]]))
+    if not registration:registration.append(homography)
     world=cv2.perspectiveTransform(points.astype(np.float32)[None],homography)[0]
    else:
-    up,down={'spiderman':(430,650),'lastofus':(341,580),'helldivers':(330,550),'concord':(290,430),'lebron':(447,457),'yotei-gold':(488,510)}.get(mode,(scale,scale))
+    up,down={'spiderman':(430,650),'lastofus':(1080,1116),'helldivers':(330,550),'concord':(290,430),'lebron':(447,457),'yotei-gold':(488,510)}.get(mode,(scale,scale))
     world=np.array([[(float(x)-cx)/scale,(cy-float(y))/(up if y<cy else down)] for x,y in points])
    paths.append([[round(float(x),5),round(float(y),5)] for x,y in world])
   layers.append({'color':color,'paths':paths})
- if mode=='hogwarts':
+ if mode=='gow20':
+  add(((hsv[:,:,0]<12)|(hsv[:,:,0]>170))&(hsv[:,:,1]>120)&source_alpha,'#b6122a')
+ elif mode=='monsterhunter':
+  region=np.zeros(gray.shape,np.uint8)
+  for polygon in [[[495,210],[650,205],[625,390],[550,455],[455,850],[405,840],[395,590]],[[1425,440],[1500,455],[1525,590],[1515,840],[1465,850],[1370,455],[1295,390]],[[722,179],[1194,179],[1150,411],[772,411]]]:cv2.fillPoly(region,[np.int32(polygon)],1)
+  delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),7).astype(float)
+  add((delta<-3)&(hsv[:,:,1]>120)&(gray>25)&(region>0),'#a80b31')
+  add((hsv[:,:,1]<125)&(gray>65)&(region>0),'#dad1d8')
+ elif mode=='genshin':
+  add((hsv[:,:,0]>8)&(hsv[:,:,0]<40)&(hsv[:,:,1]>35)&(hsv[:,:,2]>85)&source_alpha,'#b79e6c')
+  pad=np.zeros(gray.shape,np.uint8);cv2.fillPoly(pad,[(np.float32([[388,154],[612,154],[593,261],[407,261]])*factor).astype(np.int32)],1)
+  add((hsv[:,:,0]>65)&(hsv[:,:,0]<108)&(hsv[:,:,1]>60)&(pad>0),'#4a9b9d')
+  add((hsv[:,:,0]>65)&(hsv[:,:,0]<108)&(hsv[:,:,1]>20)&(hsv[:,:,1]<=60)&(pad>0),'#a4c6c5')
+  yy,xx=np.indices(gray.shape);xx=xx/factor;yy=yy/factor;grips=(((xx>205)&(xx<300))|((xx>700)&(xx<795)))&(yy>280)&(yy<475)
+  delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),7*factor).astype(float)
+  add((delta>3)&(gray>210)&(hsv[:,:,1]<40)&grips&source_alpha,'#f7f2e8')
+ elif mode=='iconblue':
+  region=np.zeros(gray.shape,np.uint8);cv2.fillPoly(region,[np.int32([[1440,550],[2160,550],[2140,935],[1460,935]])],1)
+  delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),8).astype(float)
+  add((delta<-3)&(region>0),'#154ab6')
+ elif mode=='hogwarts':
   add((hsv[:,:,0]>12)&(hsv[:,:,0]<45)&(hsv[:,:,1]>40)&(hsv[:,:,2]>70),'#baa05c')
  elif mode.startswith('concord') and not mode.endswith('rear'):
   add(((hsv[:,:,0]<16)|(hsv[:,:,0]>170))&(hsv[:,:,1]>85)&(hsv[:,:,2]>60),'#bb4239')
@@ -95,8 +147,12 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   for lo,hi,color in [(18,43,'#e0cf40'),(140,179,'#d55da8'),(88,130,'#38b6d5'),(45,87,'#45af88')]:add((hsv[:,:,0]>=lo)&(hsv[:,:,0]<=hi)&(hsv[:,:,1]>75)&(hsv[:,:,2]>100)&(region>0),color)
   add((gray>160)&(hsv[:,:,1]<60)&(region>0),'#e9ebe5')
  elif mode=='yotei-gold':
-  add((hsv[:,:,0]>12)&(hsv[:,:,0]<43)&(hsv[:,:,1]>45)&(hsv[:,:,2]>85)&source_alpha,'#b49a52')
-  add((gray<160)&(gray>60)&(hsv[:,:,1]<55)&source_alpha,'#8e9288',maximum=2000)
+  # The brush has pale dry-brush fibers as well as solid metallic pigment.
+  # Keep both values instead of turning every colored pixel into dark ochre.
+  gold=(hsv[:,:,0]>12)&(hsv[:,:,0]<43)&(hsv[:,:,2]>85)&source_alpha
+  add(gold&(hsv[:,:,1]>20),'#dfd1a3')
+  add(gold&(hsv[:,:,1]>65),'#c5ad60')
+  add((gray<170)&(gray>60)&(hsv[:,:,1]<45)&source_alpha,'#96988f',maximum=4000)
  elif mode=='fortnite':
   blue=(hsv[:,:,0]>85)&(hsv[:,:,0]<118)&(hsv[:,:,1]>60)&(hsv[:,:,2]>65)
   blue[:340]=False;blue[:,:450]=False;blue[:,1470:]=False
@@ -111,10 +167,17 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   add((hsv[:,:,0]>103)&(hsv[:,:,0]<126)&(hsv[:,:,1]>110)&(hsv[:,:,2]<180)&region,'#2865a5')
  elif mode.startswith('lastofus'):
   region=np.zeros(gray.shape,np.uint8)
-  cv2.fillPoly(region,[np.int32([[970,280],[1050,263],[1383,263],[1490,280],[1600,400],[1680,650],[1620,840],[1530,860],[1430,650],[1340,610],[1090,610],[1020,650],[900,860],[815,840],[810,650],[875,400]])],1)
-  delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),5).astype(float)
-  add((delta < -7)&(gray<65)&(region>0),'#17191c')
-  add((gray>165)&(hsv[:,:,1]<65)&(region>0),'#dfe2e0')
+  boundary=np.float32([[260,160],[375,150],[625,150],[740,160],[790,280],[805,450],[790,510],[750,535],[680,500],[628,394],[372,394],[320,500],[250,535],[210,510],[195,450],[210,280]])*3.6
+  cv2.fillPoly(region,[boundary.astype(np.int32)],1)
+  delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),12).astype(float)
+  add((delta < -3)&(gray<65)&(region>0),'#111216')
+  add((delta > 6)&(gray<100)&(region>0),'#393b40')
+  # Extract the three white printed emblems themselves. White photo background
+  # and the pale center molding are not ink on the black shell.
+  emblems=np.zeros(gray.shape,np.uint8)
+  for x0,y0,x1,y1 in [(483,180,554,235),(208,377,280,424),(706,292,762,351)]:
+   cv2.rectangle(emblems,(int(x0*3.6),int(y0*3.6)),(int(x1*3.6),int(y1*3.6)),1,-1)
+  add((gray>165)&(hsv[:,:,1]<65)&(emblems>0),'#dfe2e0')
  elif mode.startswith('helldivers'):
   region=np.zeros(gray.shape,np.uint8)
   cv2.fillPoly(region,[np.int32([[1015,245],[1110,238],[1448,238],[1543,245],[1620,430],[1640,700],[1570,795],[1510,780],[1420,590],[1150,590],[1065,780],[990,795],[935,700],[950,430]])],1)
@@ -141,6 +204,12 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
    mask=(gray<175)&(hsv[:,:,1]<60);ink='#777b76'
   elif mode=='yotei-rear':mask=(gray<115);ink='#55544f'
   elif mode=='007-rear':mask=(hsv[:,:,1]<90)&(gray>150);ink='#e0d5b5'
+  elif mode=='gow20-rear':mask=gray<120;ink='#36383a'
+  elif mode=='iconblue-rear':mask=(gray>95)&(hsv[:,:,1]<230);ink='#6fa3d5'
+  elif mode=='genshin-rear':mask=(hsv[:,:,0]>8)&(hsv[:,:,0]<40)&(hsv[:,:,1]>35);ink='#b79e6c'
+  elif mode=='monsterhunter-rear':
+   region[:]=0;cv2.rectangle(region,(600,430),(1250,630),1,-1)
+   mask=(hsv[:,:,1]<110)&(gray>120);ink='#dad1d8'
   else:
    delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),6).astype(float);mask=(delta>5)&(gray>145);ink='#c3c4c8'
   add(mask&(region>0),ink)
@@ -182,8 +251,21 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   if mode=='gta-black':add((delta < -6)&(gray>45),'#4b5558')
   else:add((delta>8)&(gray<220),'#b7b9bb')
  elif mode=='dark':
-  add((hsv[:,:,0]>10)&(hsv[:,:,0]<43)&(hsv[:,:,1]>25)&(hsv[:,:,2]>55),'#a19478')
-  add((hsv[:,:,0]>86)&(hsv[:,:,0]<125)&(hsv[:,:,1]>60)&(hsv[:,:,2]>50),'#316990')
+  # FF XVI's brass etching is mostly dark red-gold, not the bright yellow
+  # previously selected by the generic HSV threshold. Recover the actual
+  # chromatic line signal, including its low-luminance antialiased edges.
+  blue,green,red=cv2.split(im.astype(np.float32))
+  region=np.zeros(gray.shape,np.uint8)
+  for polygon in [[[350,275],[650,275],[632,404],[368,404]],[[140,418],[173,418],[266,509],[185,710],[119,651]],[[860,418],[827,418],[734,509],[815,710],[881,651]]]:
+   cv2.fillPoly(region,[np.int32(polygon)],1)
+  warmth=red-blue;cool=blue-red
+  # Local contrast separates one-pixel printed lines from the broad color
+  # cast of the photographed black plastic.
+  gold_line=(warmth-cv2.GaussianBlur(warmth,(0,0),3)>3)&(warmth>7)
+  blue_line=(cool-cv2.GaussianBlur(cool,(0,0),3)>4)&(cool>8)
+  add(gold_line&(region>0),'#b99a75')
+  pad=np.zeros(gray.shape,np.uint8);cv2.fillPoly(pad,[np.int32([[350,275],[650,275],[632,404],[368,404]])],1)
+  add(blue_line&(pad>0),'#6eabbd')
  elif mode=='orange':
   orange=(hsv[:,:,0]>7)&(hsv[:,:,0]<40)&(hsv[:,:,1]>100)&(hsv[:,:,2]>80)
   add(orange,'#ed9f4b')
@@ -200,11 +282,16 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   for lo,hi,color in [(0,53,'#35343a'),(53,80,'#4d4c54'),(80,105,'#62626a'),(105,140,'#77777c')]:add((gray>=lo)&(gray<hi),color)
  else:
   add(gray<105,'#24262a')
-  if key=='marathon':add((hsv[:,:,0]>26)&(hsv[:,:,0]<48)&(hsv[:,:,1]>105)&(hsv[:,:,2]>95),'#b6ec24')
-  if key=='lisa':add((hsv[:,:,0]>80)&(hsv[:,:,0]<112)&(hsv[:,:,1]>70)&(hsv[:,:,2]>80),'#69c8e2')
+  if key.removesuffix('-pad')=='marathon':add((hsv[:,:,0]>26)&(hsv[:,:,0]<48)&(hsv[:,:,1]>105)&(hsv[:,:,2]>95),'#b6ec24')
+  if key.removesuffix('-pad')=='lisa':add((hsv[:,:,0]>80)&(hsv[:,:,0]<112)&(hsv[:,:,1]>70)&(hsv[:,:,2]>80),'#69c8e2')
  # Remove silhouettes outside the controller's modeled front extent; geometry
  # clips the remaining control holes naturally. Even-odd fill retains counters.
- result[key]=layers
+ if key.endswith('-pad') and key!='spiderman-pad' and registration:
+  base=key.removesuffix('-pad')
+  up={'lastofus':1080,'helldivers':330,'concord':290,'lebron':447,'yotei-gold':488}.get(base,scale)
+  plate_to_photo=np.float64([[scale,0,cx],[0,-up,cy],[0,0,1]])
+  result[key]={'source':base,'transform':(registration[0]@plate_to_photo).round(9).tolist()}
+ else:result[key]=layers
 # Small rear product photographs lose the thin subtitle. Use the official
 # high-resolution logo's silhouette, fitted to the photographed rear placement.
 logo_path=root/'assets/references/audit/godofwar-logo.png'

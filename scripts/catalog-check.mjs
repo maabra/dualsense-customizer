@@ -9,7 +9,7 @@ try {
  await page.getByRole('button',{name:/Whole controller/}).click();
  await page.getByRole('button',{name:'Cosmic Red',exact:true}).click();assert.ok(Object.values((await saved()).parts).every(p=>p.id==='cosmic'));
  await page.getByRole('button',{name:'Personalize',exact:true}).click();await page.locator('.custom-control input').fill('#456789');assert.ok(Object.values((await saved()).parts).every(p=>p.id==='custom'&&p.hex==='#456789'));
- await page.getByRole('button',{name:'Editions',exact:true}).click();assert.equal(await page.locator('.edition-card').count(),24);
+ await page.getByRole('button',{name:'Editions',exact:true}).click();assert.equal(await page.locator('.edition-card').count(),28);
  const names=await page.locator('.edition-card b').allTextContents();
  for(const name of names){await page.getByLabel('Search editions').fill(name);await page.locator('.edition-card').filter({has:page.getByText(name,{exact:true})}).click();await page.waitForTimeout(100);const choices=Object.values((await saved()).parts);assert.ok(choices.every(p=>p.id===choices[0].id));assert.match(await page.locator('#selection-info').textContent(),/approximation/);}
  for(const name of ['Final Fantasy','Marathon','LISA','GTA VI · White','Gray Camouflage']){
@@ -24,5 +24,5 @@ try {
  const mixed=(await saved()).parts;assert.equal(mixed.touchpad.id,'gt');assert.equal(mixed['shell-left'].id,'wolverine-yellow');
  await page.setViewportSize({width:390,height:844});await page.getByRole('button',{name:'All parts',exact:true}).click();await page.getByRole('button',{name:/Whole controller/}).click();await page.screenshot({path:'artifacts/whole-controller-mobile.png'});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.deepEqual(errors,[]);
- console.log('PASS: all 24 edition previews render, whole-controller colors/custom colors/editions, independent artwork finishes, per-part mixing and mobile layout; no JS or shader errors.');
+ console.log('PASS: all 28 edition previews render, whole-controller colors/custom colors/editions, independent artwork finishes, per-part mixing and mobile layout; no JS or shader errors.');
 }finally{await browser.close();}

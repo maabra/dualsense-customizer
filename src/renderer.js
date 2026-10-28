@@ -302,16 +302,17 @@ export function createStudio(container, report) {
       const coated=selection.finish==='original'&&['shell','trim','rear','touchpad'].includes(group);
       m.iridescence=coated?(entry?.id.startsWith('gta')?(group==='trim'?.75:.32):entry?.id==='lisa'?.35:0):0;
       m.iridescenceIOR=1.3;m.iridescenceThicknessRange=[140,360];
-      const chroma=['pearl','indigo','teal'].includes(selection.id)&&selection.finish==='original'&&!upload;
+      const chromaId=selection.id==='lisa'?'pearl':selection.id;
+      const chroma=['pearl','indigo','teal'].includes(chromaId)&&selection.finish==='original'&&!upload;
       m.normalScale.copy(m.userData.originalNormalScale);
       if(chroma){
         const polished=['shell','rear','trim'].includes(group);
         if(polished){
-          m.roughness=.13;m.metalness=selection.id==='pearl'?.18:.4;
+          m.roughness=.13;m.metalness=chromaId==='pearl'?.18:.4;
           m.clearcoat=1;m.clearcoatRoughness=.065;
-          m.iridescence=selection.id==='pearl'?.55:.85;
+          m.iridescence=chromaId==='pearl'?.55:.85;
           m.iridescenceIOR=1.35;
-          m.iridescenceThicknessRange={pearl:[240,360],indigo:[320,480],teal:[180,300]}[selection.id];
+          m.iridescenceThicknessRange={pearl:[240,360],indigo:[320,480],teal:[180,300]}[chromaId];
           m.normalScale.multiplyScalar(.3);
         }else{
           m.metalness=0;m.roughness=group==='sticks'?.88:group==='touchpad'?.36:.23;

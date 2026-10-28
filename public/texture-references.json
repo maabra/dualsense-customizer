@@ -147,7 +147,7 @@
     "Front, top, oblique and rear photographs cannot reveal exact production UVs, microscopic molded patterns, print thickness or measured roughness.",
     "Wolverine claws and visible scratches are photo-traced; other motifs and logos remain simplified.",
     "No invented serial numbers or unreadable regulatory text. Existing model normals remain in use; these are not measured edition-specific normal maps.",
-    "All 24 entries are experiments, not authenticated replicas."
+    "All 28 entries are experiments, not authenticated replicas."
   ],
   "additionalCatalogReferences": {
     "pages": {
@@ -408,14 +408,14 @@
     ]
   },
   "closeUpMappingPass": {
-    "workflow": "Vector artwork masters for all 24 editions; shared charts derived from original model UVs; color and independent finish maps baked together into native UV coordinates.",
+    "workflow": "Vector artwork masters for all 28 editions; shared charts derived from original model UVs; color and independent finish maps baked together into native UV coordinates.",
     "resolution": "4096-pixel desktop body/touchpad, adaptive 2048-pixel mobile, 1024-pixel desktop controls. SVG masters are resolution independent.",
     "controls": "Existing per-edition finish regions, part/base finish, and print finish are preserved.",
     "sourceCleanup": "Photographed hardware-outline components removed from vector art; no runtime control exclusion masks.",
     "limitations": "Fitted vector reconstruction and native-UV baking, not an authenticated factory texture set or new measured geometry."
   },
   "catalogAudit": {
-    "scope": "All 24 catalog front appearances; additional inspected rear/oblique views; Original-model GTA checks.",
+    "scope": "All 28 catalog front appearances; additional inspected rear/oblique views; Original-model GTA checks.",
     "sources": [
       {
         "file": "hogwarts-front.jpg",
@@ -532,6 +532,281 @@
       "url": "https://resources.budgetgaming.nl/boxarts/134189_kopen_1200x846.jpg",
       "width": 1200,
       "height": 846
+    }
+  ],
+  "catalogExpansion": [
+    {
+      "edition": "genshin",
+      "file": "genshin-0.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/12/9c54568a861a57b539dae2de8a036611f339fe76.jpg",
+      "page": "https://blog.playstation.com/?p=412516",
+      "size": [
+        1920,
+        1920
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-1.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/12/76e470a53026ed640bf0357278c17b0a43b469a0.jpg",
+      "page": "https://blog.playstation.com/?p=412516",
+      "size": [
+        1920,
+        1920
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-2.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/12/4e6b648749ab87c123f030918d8b3fcf105aa4ca.jpg",
+      "page": "https://blog.playstation.com/?p=412516",
+      "size": [
+        1920,
+        1920
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-3.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/12/3f463fa946056bf12c186fdfc893e72f3a462859.jpg",
+      "page": "https://blog.playstation.com/?p=412516",
+      "size": [
+        1920,
+        1920
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-0.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/1008a1f5f5203825a42368366590a506a5a8e957.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-1.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/f230b32a9aee06c50429ec10f9393c4af7cdcf5c.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-2.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/126683fbdec96e1ce44c7dfbd90125510aaff4e3.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-3.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/16495e05f165d480ae7623b9ab6139aa216fe764.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-4.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/91e83f83fc1588f4518975e12da8ed70cb0589a4.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-5.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/33939c8bd3b5568b7b093ff1c096e61cbc0ae7f5.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        830,
+        876
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-6.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/f872b953ae2f9bd2a4ca0a80050e53dae4ad2dfd.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        1999,
+        2004
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-7.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/70e16781ea19ddb57cbc569f6a90f0b7156ed410.jpg",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        2024,
+        2250
+      ]
+    },
+    {
+      "edition": "iconblue",
+      "file": "iconblue-8.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/10/9b716d239042d0a66816a944aa010e0589903bbf.png",
+      "page": "https://blog.playstation.com/2025/10/07/first-look-at-the-dualsense-wireless-controller-icon-blue-special-edition-launching-this-october/",
+      "size": [
+        2554,
+        1704
+      ]
+    },
+    {
+      "edition": "monsterhunter",
+      "file": "monsterhunter-0.jpg",
+      "url": "https://blog.ja.playstation.com/uploads/sites/7/2024/10/f90ef54fb14cf54435b4120176a614ac382bc25d.png",
+      "page": "https://blog.ja.playstation.com/2024/10/23/20241023-ps5/",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "edition": "monsterhunter",
+      "file": "monsterhunter-1.jpg",
+      "url": "https://blog.ja.playstation.com/uploads/sites/7/2024/10/a8a76c95a94cafc55c9b2ef043347cc4ea7f30b9.png",
+      "page": "https://blog.ja.playstation.com/2024/10/23/20241023-ps5/",
+      "size": [
+        1920,
+        1080
+      ]
+    },
+    {
+      "edition": "gow20",
+      "file": "gow20-product-1.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GOW20-01-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "size": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "edition": "gow20",
+      "file": "gow20-product-2.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GOW20-02-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "size": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "edition": "gow20",
+      "file": "gow20-product-3.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GOW20-03-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "size": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "edition": "gow20",
+      "file": "gow20-product-4.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GOW20-04-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "size": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "edition": "gow20",
+      "file": "gow20-product-5.jpg",
+      "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-GOW20-05-16x9-01-28feb26$en?wid=3840&fmt=png-alpha",
+      "size": [
+        3840,
+        2160
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-product-0.jpg",
+      "url": "https://store.sony.co.th/cdn/shop/files/DualSense_LE_GENSHIN_PR_01_RGB.png?v=1765331559",
+      "size": [
+        1000,
+        667
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-front-hi.jpg",
+      "url": "https://cdn.uc.assets.prezly.com/b6887f63-cdd2-47dc-ae10-4eab42fb21a5/DualSense_LE_GENSHIN_PR_01_RGB.jpg",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "edition": "genshin",
+      "file": "genshin-rear.jpg",
+      "url": "https://shopatsc.com/cdn/shop/files/5_78af7bd5-650e-4dc5-bb30-ed37cd00e9df.jpg?v=1771228484",
+      "size": [
+        1000,
+        1000
+      ]
+    },
+    {
+      "edition": "monsterhunter",
+      "file": "monsterhunter-rear.jpg",
+      "url": "https://p2.bahamut.com.tw/B/2KU/32/73b997f7e5083ed8291bf9ddf31tay85.JPG",
+      "size": [
+        1920,
+        1440
+      ]
+    }
+  ],
+  "lastOfUsProductViews": [
+    {
+      "file": "tlou-0.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/03/97183f2fab86d3917ffa1a9b19bbda7f8ffcfbff.jpeg",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "file": "tlou-1.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/03/c0a93a6520526e871505d7dd9f74cd202cc49e31.jpeg",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "file": "tlou-2.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/03/dc4c663c5da554c9c3afb91c1f2a6284cfc7e3e4.jpeg",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "file": "tlou-3.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/03/e60952be5522338c981798946b9d5d194edab9e2.jpeg",
+      "size": [
+        3600,
+        2400
+      ]
+    },
+    {
+      "file": "tlou-4.jpg",
+      "url": "https://blog.playstation.com/uploads/2025/03/20b818b1f170e9deab3c21bf4bf00ca0abd6022b.jpeg",
+      "size": [
+        3600,
+        2400
+      ]
     }
   ]
 }

@@ -346,6 +346,62 @@
       "dpad-right": "camo/dpad-right.svg",
       "dpad-down": "camo/dpad-down.svg",
       "dpad-left": "camo/dpad-left.svg"
+    },
+    "genshin": {
+      "shell": "genshin/shell.svg",
+      "rear": "genshin/rear.svg",
+      "trim": "genshin/trim.svg",
+      "touchpad": "genshin/touchpad.svg",
+      "button-triangle": "genshin/button-triangle.svg",
+      "button-circle": "genshin/button-circle.svg",
+      "button-cross": "genshin/button-cross.svg",
+      "button-square": "genshin/button-square.svg",
+      "dpad-up": "genshin/dpad-up.svg",
+      "dpad-right": "genshin/dpad-right.svg",
+      "dpad-down": "genshin/dpad-down.svg",
+      "dpad-left": "genshin/dpad-left.svg"
+    },
+    "monsterhunter": {
+      "shell": "monsterhunter/shell.svg",
+      "rear": "monsterhunter/rear.svg",
+      "trim": "monsterhunter/trim.svg",
+      "touchpad": "monsterhunter/touchpad.svg",
+      "button-triangle": "monsterhunter/button-triangle.svg",
+      "button-circle": "monsterhunter/button-circle.svg",
+      "button-cross": "monsterhunter/button-cross.svg",
+      "button-square": "monsterhunter/button-square.svg",
+      "dpad-up": "monsterhunter/dpad-up.svg",
+      "dpad-right": "monsterhunter/dpad-right.svg",
+      "dpad-down": "monsterhunter/dpad-down.svg",
+      "dpad-left": "monsterhunter/dpad-left.svg"
+    },
+    "gow20": {
+      "shell": "gow20/shell.svg",
+      "rear": "gow20/rear.svg",
+      "trim": "gow20/trim.svg",
+      "touchpad": "gow20/touchpad.svg",
+      "button-triangle": "gow20/button-triangle.svg",
+      "button-circle": "gow20/button-circle.svg",
+      "button-cross": "gow20/button-cross.svg",
+      "button-square": "gow20/button-square.svg",
+      "dpad-up": "gow20/dpad-up.svg",
+      "dpad-right": "gow20/dpad-right.svg",
+      "dpad-down": "gow20/dpad-down.svg",
+      "dpad-left": "gow20/dpad-left.svg"
+    },
+    "iconblue": {
+      "shell": "iconblue/shell.svg",
+      "rear": "iconblue/rear.svg",
+      "trim": "iconblue/trim.svg",
+      "touchpad": "iconblue/touchpad.svg",
+      "button-triangle": "iconblue/button-triangle.svg",
+      "button-circle": "iconblue/button-circle.svg",
+      "button-cross": "iconblue/button-cross.svg",
+      "button-square": "iconblue/button-square.svg",
+      "dpad-up": "iconblue/dpad-up.svg",
+      "dpad-right": "iconblue/dpad-right.svg",
+      "dpad-down": "iconblue/dpad-down.svg",
+      "dpad-left": "iconblue/dpad-left.svg"
     }
   }
 }

@@ -5,6 +5,8 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(25000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto('http://127.0.0.1:4174/');await page.locator('input[value="low"]').check();await page.getByRole('button',{name:'Continue',exact:true}).click();await page.locator('#loading').waitFor({state:'hidden',timeout:90000});
+ assert.equal(await page.locator('#panel .panel-heading').count(),0);
+ assert(await page.getByRole('button',{name:'Reset build',exact:true}).isVisible());
  await page.screenshot({path:'artifacts/console-overview.png'});
  await page.locator('#parts').getByRole('button',{name:'Front shell',exact:true}).click();
  assert(await page.locator('.selected-part-heading').isVisible());
