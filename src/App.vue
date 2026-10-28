@@ -16,21 +16,23 @@
    <button id="sheet-toggle" aria-label="Expand or collapse customization panel" :aria-expanded="expanded" @click="!suppressClick && (expanded = !expanded)" @touchstart="sheetTouchStart" @touchend="sheetTouchEnd"><span></span><span class="sheet-label">Customize your controller <b>⌄</b></span></button>
    <div class="panel-heading"><div><p class="eyebrow">THE CONFIGURATOR</p><h2>Make it yours<span>.</span></h2></div><button id="reset" @click="reset" class="icon-button" title="Reset build">↺</button></div>
    <div class="panel-scroll">
-    <div class="section-top"><span class="step">01</span><h3>Choose a part</h3><span id="part-count">8 PARTS</span></div>
-    <div id="parts" class="parts"><button v-for="p in parts" :key="p[0]" class="part" :class="{active: selectedPart===p[0]}" :aria-pressed="selectedPart===p[0]" @click="selectedPart=p[0]; expanded=true"><span class="symbol" aria-hidden="true">{{p[2]}}</span><span class="part-name">{{p[1]}}</span></button></div>
+    <div class="section-top"><span class="step">01</span><h3>Choose a part</h3><span id="part-count">{{visibleParts.length}} PARTS</span></div>
+    <div class="mode-switch" role="group" aria-label="Customization detail"><button :class="{active:!advanced}" :aria-pressed="!advanced" @click="setAdvanced(false)">Basic</button><button :class="{active:advanced}" :aria-pressed="advanced" @click="setAdvanced(true)">Advanced <span>25 parts</span></button></div>
+    <p v-if="advanced" class="advanced-hint">Each piece gets its own color, finish, and texture. Left and right are viewed from the front.</p>
+    <div id="parts" class="parts" :class="{'advanced-parts':advanced}"><button v-for="p in visibleParts" :key="p[0]" class="part" :class="{active: selectedPart===p[0]}" :aria-pressed="selectedPart===p[0]" @click="selectedPart=p[0]; expanded=true"><span class="symbol" aria-hidden="true">{{p[2]}}</span><span class="part-name">{{p[1]}}</span></button></div>
     <div class="section-top"><span class="step">02</span><h3>Find your finish</h3></div>
     <div class="tabs" role="group" aria-label="Palette category"><button v-for="t in tabs" :key="t[0]" :class="{active:tab===t[0]}" :aria-pressed="tab===t[0]" @click="tab=t[0]; expanded=true">{{t[1]}}</button></div>
     <div id="palette">
-     <div v-if="tab==='standard'" class="swatches"><button v-for="c in standardColors" :key="c.id" class="swatch" :class="{active:current.id===c.id}" :aria-pressed="current.id===c.id" :title="c.name" @click="choose(c)"><span class="swatch-color" :style="{'--swatch':c.hex}"></span><span class="swatch-name">{{c.name}}</span></button></div>
-     <template v-else-if="tab==='edition'"><input class="edition-search" v-model="search" placeholder="Find an edition…" aria-label="Search editions"><div class="edition-list"><button v-for="c in editions" :key="c.id" class="edition-card" :class="{active:current.id===c.id}" :aria-pressed="current.id===c.id" @click="choose(c)"><span class="edition-chip" :style="{'--swatch':c.hex,'--accent':c.accent}"></span><span><b>{{c.name}}</b><small>COLOR PREVIEW · ARTWORK NEEDED</small></span><span>{{current.id===c.id?'✓':'↗'}}</span></button><p class="empty-search" v-if="!editions.length">No matching editions.</p></div></template>
-     <div v-else><label class="custom-control">Your own color<input type="color" :value="current.hex || currentEntry?.hex || '#c5f36b'" @input="customColor($event.target.value)"></label><label class="upload-label">↑ Import a texture for {{partName.toLowerCase()}}<input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadTexture"></label><p class="custom-hint">PNG, JPG or WebP · up to 20 MB. Must match this model’s UV layout. Uploaded textures stay in this session and are not included in share links.</p><button v-if="uploaded[selectedPart]" class="clear-texture" @click="clearTexture">Remove imported texture</button></div>
+     <div v-if="tab==='standard'" class="swatches"><button v-for="c in standardColors" :key="c.id" class="swatch" :class="{active:!mixed && current.id===c.id}" :aria-pressed="!mixed && current.id===c.id" :title="c.name" @click="choose(c)"><span class="swatch-color" :style="{'--swatch':c.hex}"></span><span class="swatch-name">{{c.name}}</span></button></div>
+     <template v-else-if="tab==='edition'"><input class="edition-search" v-model="search" placeholder="Find an edition…" aria-label="Search editions"><div class="edition-list"><button v-for="c in editions" :key="c.id" class="edition-card" :class="{active:!mixed && current.id===c.id}" :aria-pressed="!mixed && current.id===c.id" @click="choose(c)"><span class="edition-chip" :style="{'--swatch':c.hex,'--accent':c.accent}"></span><span><b>{{c.name}}</b><small>COLOR PREVIEW · ARTWORK NEEDED</small></span><span>{{!mixed && current.id===c.id?'✓':'↗'}}</span></button><p class="empty-search" v-if="!editions.length">No matching editions.</p></div></template>
+     <div v-else><label class="custom-control">Your own color<input type="color" :value="current.hex || currentEntry?.hex || '#c5f36b'" @input="customColor($event.target.value)"></label><label class="upload-label">↑ Import a texture for {{partName.toLowerCase()}}<input type="file" accept="image/png,image/jpeg,image/webp" @change="uploadTexture"></label><p class="custom-hint">PNG, JPG or WebP · up to 20 MB. Must match this model’s UV layout. Uploaded textures stay in this session and are not included in share links.</p><button v-if="hasUpload" class="clear-texture" @click="clearTexture">Remove imported texture</button></div>
     </div>
-    <div id="selection-info"><strong>{{ currentEntry?.name || 'Custom color' }} <span v-if="uploaded[selectedPart]">· Imported texture</span></strong><p v-if="currentEntry?.type==='edition'">Palette approximation only. Edition graphics and colored button symbols require authentic textures.</p></div>
-    <div class="finish-row"><label for="finish">Surface finish</label><select id="finish" v-model="current.finish"><option value="original">Original</option><option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option><option value="gloss">Gloss</option></select></div>
+    <div id="selection-info"><p v-if="mixed" class="mixed-note">These pieces have different settings. Choosing a finish or palette here applies it to the whole group.</p><strong>{{ mixed ? 'Mixed selections' : currentEntry?.name || 'Custom color' }} <span v-if="hasUpload">· Imported texture</span></strong><p v-if="currentEntry?.type==='edition'">Palette approximation only. Edition graphics and colored button symbols require authentic textures.</p></div>
+    <div class="finish-row"><label for="finish">Surface finish</label><select id="finish" :value="mixedFinish ? 'mixed' : current.finish" @change="setFinish($event.target.value)"><option v-if="mixedFinish" value="mixed" disabled>Mixed</option><option value="original">Original</option><option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option><option value="gloss">Gloss</option></select></div>
     <div class="section-top model-top"><span class="step">03</span><h3>The finer details</h3></div>
     <div class="setting"><div><b>High detail model</b><p>Upgrade geometry · 48 MB download</p></div><button class="switch" id="quality" role="switch" :aria-checked="quality==='high'" :disabled="loading || !!fatalError" @click="toggleQuality" aria-label="High detail model"></button></div>
     <div class="setting"><div><b>Light bar</b><p>A little signature glow</p></div><input type="color" id="light-color" v-model="light" aria-label="Light bar color"></div>
-    <details class="build-details"><summary>Your combination <span>＋</span></summary><div id="build-list"><div v-for="p in parts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">↓ Export build JSON</button></details>
+    <details class="build-details"><summary>Your combination <span>＋</span></summary><div id="build-list"><div v-for="p in advancedParts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">↓ Export build JSON</button></details>
     <p class="asset-note">Edition colors are approximations. Authentic artwork needs UV-matched textures. <a href="./ASSETS.md" target="_blank">Asset guide ↗</a></p>
    </div>
    <div class="panel-footer"><button id="randomize" @click="randomize">⤨ <span>Surprise me</span></button><span>MIX. MATCH. MAKE.</span></div>
@@ -43,7 +45,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue';
-import { parts, catalog, byId, defaults } from './catalog';
+import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
 import { createStudio } from './renderer';
 
 const STORAGE = 'dualsense-studio-v1';
@@ -54,39 +56,55 @@ const expanded = ref(false), rotating = ref(false), activeView = ref('angle'), t
 const canvasWrap = ref(null), uploaded = reactive({});
 const views = [['front','Front'],['back','Back'],['angle','Perspective']];
 const tabs = [['standard','Colors'],['edition','Editions'],['custom','Custom']];
-const current = computed(()=>build[selectedPart.value]);
+const advanced = ref(false);
+const visibleParts = computed(()=>advanced.value ? advancedParts : parts);
+const selectedTargets = computed(()=>targetsFor(selectedPart.value));
+const current = computed(()=>build[selectedTargets.value[0]]);
+const mixed = computed(()=>selectedTargets.value.some(key=>JSON.stringify(build[key])!==JSON.stringify(current.value)));
+const mixedFinish = computed(()=>selectedTargets.value.some(key=>build[key].finish!==current.value.finish));
+const hasUpload = computed(()=>selectedTargets.value.some(key=>uploaded[key]));
+function setAdvanced(value) {
+  if(value===advanced.value)return;
+  const old=selectedPart.value;
+  advanced.value=value;
+  selectedPart.value=value ? targetsFor(old)[0] : (parts.some(p=>p[0]===parentPart(old)) ? parentPart(old) : 'buttons');
+  expanded.value=true;
+}
+function setFinish(finish) {for(const key of selectedTargets.value)build[key]={...build[key],finish};}
+function clearSelectedUploads() {studio?.clearTexture(selectedPart.value);for(const key of selectedTargets.value)delete uploaded[key];}
+
 const currentEntry = computed(()=>byId[current.value.id]);
-const partName = computed(()=>parts.find(p=>p[0]===selectedPart.value)[1]);
+const partName = computed(()=>[...parts,...advancedParts].find(p=>p[0]===selectedPart.value)[1]);
 const standardColors = catalog.filter(c=>c.type==='standard');
 const editions = computed(()=>catalog.filter(c=>c.type==='edition' && c.name.toLowerCase().includes(search.value.toLowerCase())));
 const buildName = computed(()=> {
-  const ids = new Set(parts.map(([p])=>build[p].id));
+  const ids = new Set(advancedParts.map(([p])=>build[p].id));
   const original = defaults();
-  return parts.every(([p])=>build[p].id===original[p].id) ? 'Classic White' : ids.size===1 ? byId[build.shell.id]?.name || 'Custom build' : 'Your signature mix';
+  return advancedParts.every(([p])=>JSON.stringify(build[p])===JSON.stringify(original[p])) ? 'Classic White' : ids.size===1 ? byId[build['shell-left'].id]?.name || 'Custom build' : 'Your signature mix';
 });
 let studio, toastTimer, touchY = 0, suppressClick = false;
 function notify(message) {toastText.value=message;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastText.value='',3500);}
-function snapshot() {return {version:1,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
+function snapshot() {return {version:2,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
 function restore(data) {
-  if(data?.version!==1 || !data.parts || typeof data.parts!=='object') return;
-  for(const [p] of parts) {
-    const v=data.parts[p];
-    if(!v || (!byId[v.id] && v.id!=='custom')) continue;
+  if(![1,2].includes(data?.version) || !data.parts || typeof data.parts!=='object') return;
+  for(const [p] of advancedParts) {
+    const v=data.parts[p] || (data.version===1 ? data.parts[parentPart(p)] : null);
+    if(!v || (!Object.hasOwn(byId,v.id) && v.id!=='custom')) continue;
     const finish = ['original','matte','satin','metallic','gloss'].includes(v.finish)?v.finish:'original';
     build[p]={id:v.id,finish};
     if(v.id==='custom') build[p].hex=/^#[a-f\d]{6}$/i.test(v.hex)?v.hex:'#c5f36b';
   }
   if(/^#[a-f\d]{6}$/i.test(data.light)) light.value=data.light;
 }
-function choose(c) {studio?.clearTexture(selectedPart.value);delete uploaded[selectedPart.value];build[selectedPart.value]={id:c.id,finish:'original'};}
-function customColor(hex) {build[selectedPart.value]={id:'custom',hex,finish:current.value.finish};}
+function choose(c) {clearSelectedUploads();for(const key of selectedTargets.value)build[key]={id:c.id,finish:'original'};}
+function customColor(hex) {clearSelectedUploads();for(const key of selectedTargets.value)build[key]={id:'custom',hex,finish:build[key].finish};}
 function reset() {
   Object.assign(build,defaults());light.value='#91aaff';
-  for(const [p] of parts) {studio?.clearTexture(p);delete uploaded[p];}
+  for(const [p] of advancedParts) {studio?.clearTexture(p);delete uploaded[p];}
   setView('angle');notify('Back to the original.');
 }
 function randomize() {
-  for(const [p] of parts) {
+  for(const [p] of advancedParts) {
     studio?.clearTexture(p);delete uploaded[p];
     build[p]={id:catalog[Math.floor(Math.random()*catalog.length)].id,finish:'original'};
   }
@@ -114,11 +132,11 @@ async function uploadTexture(event) {
   const target=selectedPart.value;
   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>20*1024*1024) {notify('Choose a PNG, JPG or WebP under 20 MB.');event.target.value='';return;}
   if(!studio) {notify('The 3D preview is unavailable.');return;}
-  try {await studio.texture(target,file);uploaded[target]=file.name;notify('Texture applied to '+parts.find(p=>p[0]===target)[1].toLowerCase()+'.');}
+  try {await studio.texture(target,file);targetsFor(target).forEach(key=>uploaded[key]=file.name);notify('Texture applied to '+[...parts,...advancedParts].find(p=>p[0]===target)[1].toLowerCase()+'.');}
   catch {notify('This texture could not be read. Try another image.');}
   event.target.value='';
 }
-function clearTexture() {studio?.clearTexture(selectedPart.value);delete uploaded[selectedPart.value];}
+function clearTexture() {clearSelectedUploads();}
 function toggleQuality() {studio?.load(quality.value==='low'?'high':'low');}
 function sheetTouchStart(event) {touchY=event.changedTouches[0].clientY;}
 function sheetTouchEnd(event) {

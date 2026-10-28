@@ -4,6 +4,26 @@ export const parts = [
   ['trim', 'Center trim', '⋁'], ['rear', 'Rear shell', '◓'],
   ['sticks', 'Thumbsticks', '⊙'], ['triggers', 'Triggers', '⌁'],
 ];
+export const advancedParts = [
+  ['shell-left','Left front shell','◐'], ['shell-right','Right front shell','◑'],
+  ['touchpad','Touchpad','▱'], ['rear-left','Left rear shell','◐'], ['rear-right','Right rear shell','◑'],
+  ['trim-left','Left center trim','⋁'], ['trim-right','Right center trim','⋁'],
+  ['button-triangle','Triangle','△'], ['button-circle','Circle','○'], ['button-cross','Cross','×'], ['button-square','Square','□'],
+  ['dpad-up','D-pad up','↑'], ['dpad-right','D-pad right','→'], ['dpad-down','D-pad down','↓'], ['dpad-left','D-pad left','←'],
+  ['stick-left','Left thumbstick','⊙'], ['stick-right','Right thumbstick','⊙'],
+  ['l1','L1 bumper','L1'], ['r1','R1 bumper','R1'], ['l2','L2 trigger','L2'], ['r2','R2 trigger','R2'],
+  ['create','Create / Select','▯'], ['options','Options / Start','☰'], ['ps','PS button','PS'], ['mute','Mute button','−'],
+];
+export const groups = {
+  shell:['shell-left','shell-right'], touchpad:['touchpad'],
+  buttons:['button-triangle','button-circle','button-cross','button-square'],
+  dpad:['dpad-up','dpad-right','dpad-down','dpad-left'],
+  trim:['trim-left','trim-right'], rear:['rear-left','rear-right'],
+  sticks:['stick-left','stick-right'], triggers:['l1','r1','l2','r2'],
+};
+export const parentPart = part => Object.keys(groups).find(key=>groups[key].includes(part)) || part;
+export const targetsFor = part => groups[part] || [part];
+export const defaultId = part => ['trim','sticks','triggers','ps'].includes(parentPart(part)) ? 'black' : 'white';
 const color = (id, name, hex, finish = 'matte') => ({ id, name, hex, finish, type: 'standard' });
 const edition = (id, name, hex, accent = '#202126', finish = 'satin') => ({ id, name, hex, accent, finish, type: 'edition', texture: null });
 export const catalog = [
@@ -41,7 +61,7 @@ export const catalog = [
   edition('camo', 'Gray Camouflage', '#777c76', '#393d38'),
 ];
 export const byId = Object.fromEntries(catalog.map(x => [x.id, x]));
-export const defaults = () => Object.fromEntries(parts.map(([key]) => [key, { id: ['trim', 'sticks', 'triggers'].includes(key) ? 'black' : 'white', finish: 'original' }]));
+export const defaults = () => Object.fromEntries(advancedParts.map(([key]) => [key, { id: defaultId(key), finish: 'original' }]));
 export function paletteColor(entry, part) {
-  return entry.type === 'edition' && ['trim', 'sticks', 'triggers', 'dpad', 'buttons'].includes(part) ? entry.accent : entry.hex;
+  return entry.type === 'edition' && ['trim', 'sticks', 'triggers', 'dpad', 'buttons','ps'].includes(parentPart(part)) ? entry.accent : entry.hex;
 }

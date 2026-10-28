@@ -25,7 +25,7 @@ await page.screenshot({path:'artifacts/mixed-high.png'});
 await page.reload({waitUntil:'networkidle'});
 await page.locator('#loading').waitFor({state:'hidden',timeout:60000});
 const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('dualsense-studio-v1')));
-if(saved.parts.shell.id!=='wolverine-yellow'||saved.parts.touchpad.id!=='gt'||saved.parts.buttons.id!=='anniversary')throw new Error('Build persistence failed');
+if(saved.parts['shell-left'].id!=='wolverine-yellow'||saved.parts.touchpad.id!=='gt'||saved.parts['button-cross'].id!=='anniversary')throw new Error('Build persistence failed');
 await page.setViewportSize({width:390,height:844});
 await page.screenshot({path:'artifacts/mobile.png'});
 await page.locator('#sheet-toggle').click();

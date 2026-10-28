@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { byId, paletteColor } from './catalog';
+import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
 
 export function createStudio(container, report) {
   const scene = new THREE.Scene();
@@ -71,14 +71,15 @@ export function createStudio(container, report) {
         if(!obj.isMesh) return;
         const material = obj.material.clone(); obj.material = material;
         const part = material.name;
+        const group = parentPart(part);
         material.userData.originalMap = material.map;
         material.userData.originalRoughnessMap = material.roughnessMap;
         material.userData.tint = {value:new THREE.Color('#ffffff')};
         material.userData.blend = {value:0};
         // Clear button caps need their original alpha to reveal the symbols below.
-        material.transparent = ['buttons','dpad','details'].includes(part);
-        material.depthWrite = !['buttons','dpad'].includes(part);
-        if(['buttons','dpad'].includes(part)) {
+        material.transparent = ['buttons','dpad','details'].includes(group);
+        material.depthWrite = !['buttons','dpad'].includes(group);
+        if(['buttons','dpad'].includes(group)) {
           const index=obj.geometry.index, positions=obj.geometry.attributes.position;
           let depth=0;
           for(let i=0;i<index.count;i++)depth+=positions.getZ(index.getX(i));
@@ -116,7 +117,7 @@ export function createStudio(container, report) {
       if(!state[part]) return;
       const selection = state[part]; const entry = byId[selection.id];
       if(!entry && selection.id !== 'custom') return;
-      const native = selection.id === (['trim','sticks','triggers'].includes(part)?'black':'white');
+      const native = selection.id === defaultId(part);
       const upload = uploads.get(part);
       m.map = upload || m.userData.originalMap;
       m.userData.blend.value = upload ? 0 : native ? 0 : 1;
@@ -155,12 +156,14 @@ export function createStudio(container, report) {
       try {
         const texture = await new THREE.TextureLoader().loadAsync(url);
         texture.colorSpace = THREE.SRGBColorSpace; texture.flipY=false;
-        const old = uploads.get(part); uploads.set(part,texture);old?.dispose();
+        const oldTextures = new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));
+        for(const key of targetsFor(part)) uploads.set(key,texture);
+        oldTextures.forEach(old=>{if(![...uploads.values()].includes(old))old.dispose();});
         if(activeState) apply(activeState,activeLight);
       } finally {URL.revokeObjectURL(url);}
     },
-    clearTexture(part) {uploads.get(part)?.dispose();uploads.delete(part);if(activeState) apply(activeState,activeLight);},
-    hasTexture(part) {return uploads.has(part);},
+    clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
+    hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
     dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());environment.dispose();shadow.geometry.dispose();shadow.material.dispose();shadowMap.dispose();renderer.dispose();renderer.domElement.remove();},
   };

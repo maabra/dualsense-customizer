@@ -45,24 +45,38 @@ def prepare(filename, output):
             lo = [min(positions[i][a] for i in ids) for a in range(3)]
             hi = [max(positions[i][a] for i in ids) for a in range(3)]
             x, y, z = [(lo[a]+hi[a])/2 for a in range(3)]
+            side = 'left' if x < 0 else 'right'
             if mat == 2: part = 'rear'
             elif mat == 0:
                 if lo[0] < -.9 and hi[0] > .9: part = 'trim'
-                elif abs(x) > .5: part = 'shell'
+                elif abs(x) > .5: part = 'shell-' + side
                 elif lo[1] > .2 and hi[0] > .39: part = 'touchpad'
                 elif lo[1] > .17: part = 'light'
                 else: part = 'trim'
+            elif .43 < abs(x) < .51 and y > .44 and z > .25:
+                part = 'create' if x < 0 else 'options'
             elif abs(x) > .4 and z > .2 and y < .5:
-                part = 'buttons' if x > 0 else 'dpad'
-            elif abs(x) > .4 and y > .4: part = 'triggers'
-            elif .17 < abs(x) < .46 and y < .15: part = 'sticks'
+                if x > 0:
+                    part = 'button-' + ('triangle' if y > .35 else 'cross' if y < .2 else 'square' if x < .56 else 'circle')
+                else:
+                    part = 'dpad-' + ('up' if y > .35 else 'down' if y < .2 else 'left' if x < -.65 else 'right')
+            elif abs(x) > .4 and y > .4:
+                if z > .2 and abs(x) < .51: part = 'create' if x < 0 else 'options'
+                else: part = ('l' if x < 0 else 'r') + ('2' if z < 0 else '1')
+            elif .17 < abs(x) < .46 and y < .15: part = 'stick-' + side
+            elif abs(x) < .08 and -.04 < y < .08 and z > .23: part = 'ps'
+            elif abs(x) < .06 and -.13 < y < -.08 and z > .19: part = 'mute'
             else: part = 'details'
             parts[r] = part
         grouped = collections.defaultdict(list)
         for i in range(0, len(indices), 3):
             r = root(indices[i]); part = parts[r]
+            if part in ('rear', 'trim'):
+                # These are continuous surfaces: divide at the center plane.
+                cx = sum(positions[k][0] for k in indices[i:i+3]) / 3
+                part += '-left' if cx < 0 else '-right'
             # Transparent button caps must be separate draw calls from their symbols.
-            group = (part, r if part in ('buttons', 'dpad') else 0)
+            group = (part, r if part.startswith(('button-', 'dpad-')) else 0)
             grouped[group].extend(indices[i:i+3])
         mesh['primitives'] = []
         for (part, _), values in grouped.items():
