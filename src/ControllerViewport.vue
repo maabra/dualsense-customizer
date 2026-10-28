@@ -318,7 +318,7 @@ function createStudio(container, report) {
         const index=insert.geometry.index,p=insert.geometry.attributes.position,bounds=new THREE.Box3();
         for(let i=0;i<(index?.count||p.count);i++)bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,index?index.getX(i):i));
         const size=(bounds.max.x-bounds.min.x)*1.35;
-        const label=new THREE.Mesh(new THREE.PlaneGeometry(size,size),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.48,alphaTest:.2,depthWrite:true}));
+        const label=new THREE.Mesh(new THREE.PlaneGeometry(size,size),new THREE.MeshBasicMaterial({color:0xffffff,alphaTest:.2,depthWrite:true,toneMapped:false}));
         label.material.name='symbol:'+part;label.renderOrder=11;
         label.position.set((bounds.min.x+bounds.max.x)/2,(bounds.min.y+bounds.max.y)/2,bounds.max.z+.0008).applyMatrix4(insert.matrix);
         label.quaternion.copy(insert.quaternion);insert.parent.add(label);nextLabels.set(part,{mesh:label,key:null});
@@ -346,7 +346,7 @@ function createStudio(container, report) {
       const entry=byId[selection.id]||{id:'custom:'+selection.hex,hex:selection.hex||'#69aaff'};
       if(label.key!==entry.id){
         label.mesh.material.map?.dispose();
-        const map=new THREE.CanvasTexture(createButtonSymbolCanvas(entry,part,quality!=='low'&&mobile?quality+'-mobile':quality));
+        const map=new THREE.CanvasTexture(createButtonSymbolCanvas(entry,part));
         map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=renderer.capabilities.getMaxAnisotropy();
         label.mesh.material.map=map;label.mesh.material.needsUpdate=true;label.key=entry.id;
       }
