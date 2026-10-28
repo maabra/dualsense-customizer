@@ -8,13 +8,13 @@ An interactive 3D playground for mixing DualSense controller parts, colors, and 
 - Console-inspired Customize, Light bar, and Settings menus, including keyboard tab navigation. Choosing a part opens its appearance menu; All parts returns to the overview without losing edits.
 - Grouped controls or 25 individual pieces: front and rear shell halves, center trim halves, touchpad, four face buttons, four D-pad directions, two thumbsticks, L1/R1 bumpers, L2/R2 triggers, Create, Options, PS, and mute buttons.
 - Independent colors, finishes, and texture imports for each piece.
-- Standard-color and limited-edition palettes, custom colors, and randomized combinations.
+- Standard-color and limited-edition palettes, custom colors, and one-click randomized combinations.
 - Startup model chooser recommending the source Original model, alongside separate High Definition and Low Definition GLB options.
 - Studio softbox reflections, area lighting, edition-specific material finishes, and real cast shadows on all models.
 - Clear face-button caps with reflective edges, refraction, and a separate printed-symbol insert.
 - Illuminated side light bars with subtle light spill, Player 1–4 color presets, white, and a custom color picker. Player palette references follow [PlayStation's controller color explanation](https://blog.de.playstation.com/?p=157987).
 - Transfer progress is bounded below 100% until the model is ready; missing transfer sizes use an indeterminate loading message.
-- Responsive desktop layout and a draggable mobile drawer with velocity-based snapping, a compact closed position, and a preview that resizes as the drawer moves.
+- Responsive desktop layout with a hideable customization panel, plus a draggable mobile drawer with velocity-based snapping, a compact closed position, and a preview that resizes as the drawer moves.
 - Automatically saved color and finish selections, shareable build links, JSON export, and PNG snapshots.
 
 Switching between Grouped parts and Individual parts preserves each piece's settings. A group displays “Mixed selections” when its pieces differ; applying a palette, finish, or texture to that group updates all its pieces. The overview tiles show each part's current appearance.

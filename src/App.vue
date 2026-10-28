@@ -1,6 +1,6 @@
 <template>
 
- <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><span class="header-caption">CONTROLLER DESIGN STUDIO</span><button id="share" @click="share" class="outline">↗ <span>Share design</span></button></header>
+ <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><span class="header-caption">CONTROLLER DESIGN STUDIO</span><div class="header-actions"><button id="randomize-header" class="outline" aria-label="Randomize appearance" title="Randomize appearance" @click="randomize">⤨ <span>Randomize</span></button><button id="share" @click="share" class="outline">↗ <span>Share design</span></button></div></header>
  <dialog ref="modelDialog" class="model-dialog" aria-labelledby="model-title" @cancel="!studioReady && $event.preventDefault()">
   <form @submit.prevent="startModel">
    <StudioLogo /><h2 id="model-title">Select your controller model</h2><p class="model-intro">Choose the model that suits your device. Your design works with all three.</p>
@@ -9,9 +9,10 @@
    <button class="model-start" type="submit" autofocus>Continue <span aria-hidden="true">→</span></button>
   </form>
  </dialog>
- <main :style="drawerStyle">
+ <main :class="{'panel-collapsed':panelCollapsed}" :style="drawerStyle">
   <section id="stage" aria-label="Interactive 3D controller preview">
    <ControllerViewport ref="canvasWrap" @status="report" />
+   <button v-if="panelCollapsed" class="panel-reopen outline" aria-controls="panel" aria-expanded="false" @click="panelCollapsed=false">Show menu <span aria-hidden="true">›</span></button>
    <div id="loading" role="status" v-if="loading"><span class="spinner"></span><span id="loading-text">{{loadingLabel}}</span></div>
    <div v-if="fatalError" class="model-error" role="alert"><strong>Model unavailable</strong><p>{{fatalError}}</p><div class="model-error-actions"><button class="outline" @click="retry">Try again</button><button class="outline" @click="openModelChooser">Choose another model</button></div></div>
    <div class="stage-label"><button id="model-status" :disabled="loading" @click="openModelChooser">{{ studioReady ? activeModel.name : 'Choose a model' }} <span>↗</span></button></div>
@@ -20,7 +21,7 @@
    <p class="gesture"><span class="desktop-gesture">Left drag to rotate · Right drag to move · Scroll to zoom</span><span class="mobile-gesture">Drag to rotate · Two fingers to move and zoom</span></p>
   </section>
   <MobileDrawer v-model:expanded="expanded" @position="drawerPosition=$event">
-   <div class="panel-navigation"><nav class="studio-nav" role="tablist" aria-label="Controller settings"><button v-for="item in sections" :key="item[0]" :id="'nav-'+item[0]" role="tab" :aria-selected="section===item[0]" :tabindex="section===item[0]?0:-1" :aria-controls="'section-'+item[0]" :class="{active:section===item[0]}" @click="selectSection(item[0])" @keydown="navKey($event,item[0])">{{item[1]}}</button></nav><button id="reset" @click="reset" class="icon-button" title="Reset build" aria-label="Reset build"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 1 1-.15 5M4 4v5h5" /></svg></button></div>
+   <div class="panel-navigation"><nav class="studio-nav" role="tablist" aria-label="Controller settings"><button v-for="item in sections" :key="item[0]" :id="'nav-'+item[0]" role="tab" :aria-selected="section===item[0]" :tabindex="section===item[0]?0:-1" :aria-controls="'section-'+item[0]" :class="{active:section===item[0]}" @click="selectSection(item[0])" @keydown="navKey($event,item[0])">{{item[1]}}</button></nav><button id="reset" @click="reset" class="icon-button" title="Reset build" aria-label="Reset build"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9a8 8 0 1 1-.15 5M4 4v5h5" /></svg></button><button class="icon-button panel-collapse" aria-label="Hide customization menu" title="Hide menu" aria-controls="panel" aria-expanded="true" @click="panelCollapsed=true"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5-7 7 7 7" /></svg></button></div>
    <div class="panel-scroll" ref="panelScroll">
     <section id="section-customize" role="tabpanel" aria-labelledby="nav-customize" v-show="section==='customize'">
     <div v-show="!appearanceOpen" class="part-library">
@@ -98,7 +99,7 @@ const activeModel=computed(()=>modelOptions.find(model=>model.id===quality.value
 const chosenModel = ref('original'), modelDialog = ref(null), studioReady = ref(false);
 function openModelChooser() {chosenModel.value=quality.value;modelDialog.value?.showModal();}
 function startModel() {modelDialog.value?.close();studio?.load(chosenModel.value);}
-const expanded = ref(false), rotating = ref(false), activeView = ref('angle'), toastText = ref(''), fatalError = ref('');
+const expanded = ref(false), panelCollapsed = ref(false), rotating = ref(false), activeView = ref('angle'), toastText = ref(''), fatalError = ref('');
 const canvasWrap = ref(null), uploaded = reactive({});
 const views = [['front','Front'],['back','Rear'],['angle','Perspective']];
 const tabs = [['standard','Colors'],['edition','Editions'],['custom','Personalize']];
@@ -265,5 +266,19 @@ header{height:78px;padding:0 36px;background:#080d15}.header-caption{font-size:9
 .panel-navigation>#reset{flex-shrink:0;margin-right:16px}
 @media(max-width:760px){
  #stage,body.sheet-expanded #stage{height:var(--preview-height,calc(100% - 100px));transition:var(--preview-transition,height .3s ease)}
+}
+.header-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+#randomize-header{white-space:nowrap}
+@media(min-width:761px){
+ main.panel-collapsed{grid-template-columns:minmax(0,1fr)}
+ main.panel-collapsed #panel{display:none}
+ .panel-reopen{position:absolute;z-index:5;top:16px;right:16px;display:flex;align-items:center;gap:8px;background:#151b27dd;backdrop-filter:blur(12px)}
+ .panel-collapse{display:grid;place-items:center;flex-shrink:0;margin-right:12px}
+}
+@media(max-width:760px){
+ header .header-caption{display:none}
+ #randomize-header,#share{display:grid;place-items:center;width:40px;height:40px;padding:8px;font-size:16px;line-height:1}
+ #randomize-header span,#share span{display:none}
+ .panel-collapse,.panel-reopen{display:none}
 }
 </style>
