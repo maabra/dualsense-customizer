@@ -71,8 +71,12 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(!recreatedEditions.has(id)||!['shell','rear','touchpad','trim','buttons','dpad','ps'].includes(group))return null;
   // Controls use local UVs; all shell and trim halves share a continuous front layout.
   const touch=group==='touchpad',button=group==='buttons'||group==='dpad'||part==='ps';
-  const canvas=document.createElement('canvas');canvas.width=button?256:touch?1024:1536;canvas.height=button?256:touch?552:998;
-  if(detail!=='low'){canvas.width*=2;canvas.height*=2;}
+  const canvas=document.createElement('canvas');canvas.width=button?512:touch?1536:2048;canvas.height=button?512:Math.round(canvas.width*(touch?552/1024:998/1536));
+  if(detail!=='low'){
+    const mobile=detail.endsWith('-mobile');
+    canvas.width=button?(mobile?512:1024):(mobile?2048:4096);
+    canvas.height=button?1024:Math.round(canvas.width*(touch?552/1024:998/1536));
+  }
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
   const metal=id==='wolverine-metal',wolverine=id.startsWith('wolverine');
   let base='#b5b5ae';
@@ -92,15 +96,15 @@ export function createEditionCanvas(id,part,group,detail='low') {
   }
   if(group==='dpad') {
     if(wolverine) {
-      ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);
+      ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);ctx.scale(w/256,h/256);
       polygon(ctx,[[-18,-7],[18,-7],[0,-25]],metal?'#b8b9bb':'#e5bd35');ctx.restore();
     }
     if(id.startsWith('astro')) {
       const angle={'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part];
-      ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle);polygon(ctx,[[-15,-9],[15,-9],[0,-26]],'#94c6dd');ctx.restore();
+      ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle);ctx.scale(w/256,h/256);polygon(ctx,[[-15,-9],[15,-9],[0,-26]],'#94c6dd');ctx.restore();
     }
     if(!wolverine&&!id.startsWith('astro')) {
-      ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);
+      ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);ctx.scale(w/256,h/256);
       polygon(ctx,[[-18,-7],[18,-7],[0,-25]],id==='fortnite'?'#60869c':'#90949c');ctx.restore();
     }
     return canvas;
@@ -112,13 +116,30 @@ export function createEditionCanvas(id,part,group,detail='low') {
     ctx.fillStyle='#4286bd';ctx.fillRect(w*.36,h*.62,w*.32,h);
     ctx.fillStyle='#3d9b7d';ctx.fillRect(w*.68,h*.62,w*.32,h);return canvas;
   }
+  if(id==='gt'&&touch) {
+    // Rebuild the pad's simple printed geometry as clean vectors. Photograph
+    // thresholds lose the red ink and turn the hood fasteners into noisy blobs.
+    ctx.fillStyle='#222529';ctx.fillRect(w*.325,0,w*.16,h);ctx.fillRect(w*.516,0,w*.16,h);
+    ctx.strokeStyle='#c92b40';ctx.lineWidth=w*.0035;ctx.beginPath();ctx.ellipse(w*.819,h*.206,w*.0435,h*.0806,0,0,Math.PI*2);ctx.stroke();
+    text(ctx,'E',w*.819,h*.206,h*.125,'#c92b40','700');
+    polygon(ctx,[[w*.838,h*.345],[w*.893,h*.219],[w*.931,h*.359]],'#286eb2');
+    polygon(ctx,[[w*.895,h*.24],[w*.875,h*.31],[w*.894,h*.305],[w*.883,h*.35],[w*.914,h*.285],[w*.897,h*.295]],'#ca293c');
+    for(const x of [.18,.82]) {
+      ctx.save();ctx.translate(w*x,h*.79);ctx.scale(w,h);
+      ctx.beginPath();ctx.moveTo(-.027,-.105);ctx.bezierCurveTo(-.029,-.165,.029,-.165,.027,-.105);ctx.lineTo(.038,.08);ctx.bezierCurveTo(.041,.16,-.041,.16,-.038,.08);ctx.closePath();
+      ctx.fillStyle='#777d80';ctx.fill();ctx.strokeStyle='#32383b';ctx.lineWidth=.003;ctx.stroke();
+      ctx.beginPath();ctx.moveTo(-.014,-.09);ctx.bezierCurveTo(-.014,-.13,.014,-.13,.014,-.09);ctx.lineTo(.02,.06);ctx.bezierCurveTo(.021,.12,-.021,.12,-.02,.06);ctx.closePath();ctx.stroke();
+      ctx.beginPath();ctx.ellipse(0,.055,.02,.033,0,0,Math.PI);ctx.stroke();
+      ctx.fillStyle='#343a3d';for(const side of [-1,1])for(const y of [-.085,.015,.10]){ctx.beginPath();ctx.ellipse(side*.027,y,.003,.0055,0,0,Math.PI*2);ctx.fill();}
+      ctx.restore();
+    }
+    return canvas;
+  }
   if(additionalEditions.has(id)) {drawCatalogArtwork(ctx,id,group,w,h);return canvas;}
   if(drawTracedArtwork(ctx,id,group,w,h))return canvas;
   if(group==='rear') {
-    const labelInk=['gt','wolverine-yellow','wolverine-metal','spiderman'].includes(id)?'#666a73':'#787f8a';
-    text(ctx,'SONY',w*.5,h*.075,w*.026,labelInk,'700');
-    text(ctx,'Sony Interactive Entertainment Inc.',w*.5,h*.445,w*.008,labelInk,'400');
-    text(ctx,'SONY®',w*.5,h*.47,w*.014,labelInk,'700');
+    // Factory lettering already exists in the original texture/normal set.
+    // A second planar label would duplicate it and stretch across the top bevel.
     if(wolverine)for(const side of [-1,1]) {
       ctx.save();if(side>0){ctx.translate(w,0);ctx.scale(-1,1);}
       polygon(ctx,[[0,h*.69],[w*.21,h*.72],[w*.27,h],[0,h]],metal?'#b7babf':'#e8bd29');ctx.restore();
@@ -139,8 +160,10 @@ export function createEditionCanvas(id,part,group,detail='low') {
     const ink=metal?'#c9cacc':'#f7cb33';
     if(touch||group==='shell') {
       const project=([x,y])=>touch?[(x+.405)/.81*w,(.642-y)/.437*h]:[(x+1)/2*w,(.65-y)/1.3*h];
+      ctx.save();
       for(const path of referenceTraces.scratches)polygon(ctx,path.map(project),'#55565b');
       for(const path of referenceTraces.claws)polygon(ctx,path.map(project),ink);
+      ctx.restore();
       if(group==='shell') {
         // Create/Options legends sit on the shell, above their separate buttons.
         for(let i=-1;i<=1;i++)line(ctx,[project([.452,.565+i*.011]),project([.482,.565+i*.011])],ink,w*.0014);

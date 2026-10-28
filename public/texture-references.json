@@ -406,5 +406,12 @@
       "Unverified microscopic embossing, ink thickness, clear windows and serial/regulatory labels are not claimed as reconstructed.",
       "Hogwarts, LeBron, Concord and Yotei Gold artwork remains simplified."
     ]
+  },
+  "closeUpMappingPass": {
+    "workflow": "Vector artwork masters for all 24 editions; shared charts derived from original model UVs; color and independent finish maps baked together into native UV coordinates.",
+    "resolution": "4096-pixel desktop body/touchpad, adaptive 2048-pixel mobile, 1024-pixel desktop controls. SVG masters are resolution independent.",
+    "controls": "Existing per-edition finish regions, part/base finish, and print finish are preserved.",
+    "sourceCleanup": "Photographed hardware-outline components removed from vector art; no runtime control exclusion masks.",
+    "limitations": "Fitted vector reconstruction and native-UV baking, not an authenticated factory texture set or new measured geometry."
   }
 }

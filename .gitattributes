@@ -1,3 +1,4 @@
 # Compiled deployment output is not handwritten application source.
 docs/** linguist-generated=true
 package-lock.json linguist-generated=true
+public/artwork-vectors/** linguist-generated=true

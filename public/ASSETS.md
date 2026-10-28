@@ -6,7 +6,7 @@ The configurator ships with the provided default DualSense models and their orig
 
 `src/edition-artwork.js` draws Gran Turismo racing stripes and badges, both Wolverine claw treatments, the 30th Anniversary colored face-button symbols, both Astro Bot eye treatments and blue detailing, Spider-Man symbiote strokes and emblem, and simplified Ragnarök bear/wolf motifs. These are best-effort approximations; small logos, line placement, finish, and some rear details differ from the official designs.
 
-The renderer adds a secondary front-projection UV attribute. Front shells and trim share the controller-wide layout, touchpads have dedicated local bounds, and each face button uses its own local projection. Front and rear artwork use opposite facing masks, with mirrored rear projection so rear markings read correctly. Curved sides retain the selected part color. The original UVs and normal maps are retained. Hand-drawn maps are recreated on demand, cached locally, and restored from edition IDs in saved builds. Texture uploads override recreated artwork for their selected pieces.
+The renderer retains native UVs and adds a temporary vector-plate UV attribute for baking. Front shells and trim share the controller-wide layout, touchpads have dedicated local bounds, and each face button uses its own local projection. Front and rear artwork use opposite facing masks, with mirrored rear projection so rear markings read correctly. Curved sides retain the selected part color. The original UVs and normal maps are retained. Hand-drawn maps are recreated on demand, cached locally, and restored from edition IDs in saved builds. Texture uploads override recreated artwork for their selected pieces.
 
 The 25-part icon atlas is at `icons/dualsense-parts-atlas-v1.png`; its generation prompt is in `icons/README.md`.
 
@@ -50,7 +50,7 @@ Official artwork and trademarks remain the property of their owners. This is an 
 
 ## Detailed reference pass
 
-Wolverine claw paint and visible scratch contours are traced from an official front photograph, rather than generated randomly. Rear grip tips use the official rear views. Astro controls use white substrates and pale blue markings, with dotted circular eyes for the original edition. Anniversary controls use a cooler gray and colored PS-button regions. Original/high models use 3072-pixel body maps; Low Definition uses 1536 pixels. Maps are released when no longer used by the current mix.
+Wolverine claw paint and visible scratch contours are traced from an official front photograph, rather than generated randomly. Rear grip tips use the official rear views. Astro controls use white substrates and pale blue markings, with dotted circular eyes for the original edition. Anniversary controls use a cooler gray and colored PS-button regions. Original/high models use 4096-pixel body and touchpad maps on desktop, with 2048-pixel body maps on mobile; Low Definition uses 2048-pixel body maps and 1536-pixel touchpads. Maps are released when no longer used by the current mix.
 
 Rubber sticks, matte rear plastic, glossy button caps, painted touchpads, and metallic trim use separate physical material profiles. Wolverine painted claw regions have a different roughness from their substrate. Surface values are artistic estimates, not measurements. The supplied normal maps remain intact.
 
@@ -83,3 +83,17 @@ Ragnarok's outer shell is blue with a pale center; its bear/wolf silhouette is t
 These material values are estimated by eye. They are not measured BRDFs, factory coating specifications, or edition-specific scans. Molded microscopic PlayStation symbols, exact ink thickness, transparent Adamantium windows, exact serial/regulatory lettering, and geometry changes are not newly reconstructed. Photos cannot establish all of those details reliably. Some source images contain small, low-contrast print that is only partially recoverable; contour reconstruction can omit, merge, or displace strokes. No controller textures in this pass were image-generated.
 
 The [testing-purpose rights notice](./RIGHTS.md) applies to these reconstructions as well as earlier assets. The model retains its original CC BY 4.0 attribution.
+
+## Shared native-UV vector workflow
+
+All 24 editions have resolution-independent SVG artwork masters under [artwork-vectors/manifest.json](./artwork-vectors/manifest.json). They are generated from the same drawing functions as the app, using paths, curves, geometric primitives, gradients and vector text. No reference photograph is embedded in an SVG. Photo-derived contours are still approximations of the printed artwork, not authenticated factory designs; complex editions retain their previously documented limitations.
+
+`src/native-uv-baker.js` builds reusable charts from the supplied model's original UV coordinates. Each vector plate and its separate finish-data map is baked into the same native UV chart. The displayed controller samples its original UV coordinates, not a live planar projection. Left/right part customization and all existing edition finish profiles remain independent. Geometry and original UV islands are retained; this does not claim a newly measured factory unwrap.
+
+Only front/rear-facing chart surfaces participate in the bake; steep bevels are not used to project lettering across perpendicular surfaces. Back-facing fragments cannot erase front artwork when UV coverage overlaps. Color and finish targets share coordinates. Premultiplied coverage is decoded after filtering so transparent chart boundaries do not create dark fringes. Factory embossed details remain in the original normal maps. Photographed control-outline components are removed from the vector masters instead of using runtime exclusion masks around D-pad lobes or buttons.
+
+Original and High Definition artwork uses 4096-pixel body/touchpad masters and 1024-pixel controls on desktop. Smaller viewports use 2048-pixel body/touchpad maps and 512-pixel controls to limit GPU memory; Low Definition uses 2048-pixel body maps, 1536-pixel touchpads and 512-pixel controls. Vector masters can be rasterized at higher resolution without enlarging a source bitmap. Original embedded normal maps remain as supplied. Full supported anisotropic filtering is enabled for oblique views. Old native-UV color and finish targets are released when no longer used.
+
+Gran Turismo's touchpad stripes, red circled E, blue/red electrical warning and gray hood-fastener graphics are rebuilt as vector geometry fitted to the inspected front reference. Generic duplicate planar Sony/regulatory labels are not added over the supplied factory embossing. Other small artwork still depends on the reference quality; higher raster resolution does not recover missing source evidence.
+
+The **Artwork finish** control continues to modify print separately from the base part finish. Reusing UV charts does not flatten metallic ink, matte plastic, clearcoat or pearl treatments into one material.

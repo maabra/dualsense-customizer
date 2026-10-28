@@ -5,6 +5,7 @@ import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUnifo
 import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
 import { transferProgress } from './loading';
 import {createSurfaceCanvas} from './surface-artwork';
+import {createNativeUvBaker,disposeBakedArtwork} from './native-uv-baker';
 import { createEditionCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 export function createStudio(container, report) {
@@ -90,16 +91,19 @@ export function createStudio(container, report) {
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
   const artworkCache=new Map();
+  let uvBaker;
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
   function artworkFor(entry,part,group) {
     if(entry?.artwork!=='recreated')return null;
     const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
-      const canvas=createEditionCanvas(entry.id,part,group,quality);
+      const canvas=createEditionCanvas(entry.id,part,group,quality!=='low'&&mobile?quality+'-mobile':quality);
       if(!canvas){artworkCache.set(key,null);return null;}
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       const surface=new THREE.CanvasTexture(createSurfaceCanvas(canvas,entry.id,group));surface.colorSpace=THREE.NoColorSpace;surface.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.userData.surface=surface;
-      texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());artworkCache.set(key,texture);
+      texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
+      const baked=uvBaker?.bake(texture,surface,part,group);
+      if(baked){texture.dispose();surface.dispose();artworkCache.set(key,baked);}else artworkCache.set(key,texture);
     }
     return artworkCache.get(key);
   }
@@ -149,6 +153,7 @@ export function createStudio(container, report) {
         material.userData.blend = {value:0};
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
         material.userData.surface={value:emptyArtwork};material.userData.surfaceEnabled={value:0};
+        material.userData.uvBounds={value:new THREE.Vector4(0,0,1,1)};
         material.userData.printOverride={value:new THREE.Vector2(-1,-1)};
         // Facing direction changes generated shader source. Three's default key
         // only sees the callback text, so closures need distinct program keys.
@@ -182,15 +187,17 @@ export function createStudio(container, report) {
           shader.uniforms.studioTint = material.userData.tint;
           shader.uniforms.studioBlend = material.userData.blend;
           shader.uniforms.studioArtwork=material.userData.artwork;shader.uniforms.studioArtworkEnabled=material.userData.artworkEnabled;
-          shader.vertexShader='attribute vec2 studioArtworkUv;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
-          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvEditionUV=studioArtworkUv;\nvEditionFacing=max(0.0,${group==='rear'?'-normal.z':'normal.z'});`);
+          shader.uniforms.studioUvBounds=material.userData.uvBounds;
+          shader.vertexShader='uniform vec4 studioUvBounds;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
+          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvEditionUV=(uv-studioUvBounds.xy)/studioUvBounds.zw;\nvEditionFacing=max(0.0,${group==='rear'?'-normal.z':'normal.z'});`);
           shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
             #include <map_fragment>
             float detail = 0.72 + 0.28 * dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
             diffuseColor.rgb = mix(diffuseColor.rgb, studioTint * detail, studioBlend);
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
-            float artMask=studioArtworkEnabled*editionArt.a*smoothstep(0.03,0.35,vEditionFacing);
+            editionArt.rgb/=max(editionArt.a,0.0001);
+            float artMask=studioArtworkEnabled*editionArt.a;
             diffuseColor.rgb=mix(diffuseColor.rgb,editionArt.rgb*(0.9+detail*0.1),artMask);
           `);
           // Explicit data maps keep metallic ink and clearcoat separate from albedo.
@@ -199,9 +206,10 @@ export function createStudio(container, report) {
           shader.uniforms.studioPrintOverride=material.userData.printOverride;
           shader.fragmentShader='uniform sampler2D studioSurface;\nuniform float studioSurfaceEnabled;\nuniform vec2 studioPrintOverride;\n'+shader.fragmentShader;
           shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-            vec3 editionSurface=texture2D(studioSurface,vEditionUV).rgb;
+            vec4 surfaceTexel=texture2D(studioSurface,vEditionUV);
+            vec3 editionSurface=surfaceTexel.rgb/max(surfaceTexel.a,0.0001);
             float printedRegion=step(0.45,editionSurface.b);
-            float finishFacing=studioArtworkEnabled*smoothstep(0.03,0.35,vEditionFacing);
+            float finishFacing=studioArtworkEnabled*editionArt.a;
             float finishMask=finishFacing*max(studioSurfaceEnabled,printedRegion);
             float printRough=editionSurface.r;
             float printMetal=editionSurface.g;
@@ -223,7 +231,8 @@ export function createStudio(container, report) {
         };
       });
       if(model) {pivot.remove(model); release(model);}
-      model = next; pivot.add(model); quality = level;
+      uvBaker?.dispose();artworkCache.forEach(disposeBakedArtwork);artworkCache.clear();
+      model = next; pivot.add(model); quality = level;uvBaker=createNativeUvBaker(renderer,model);
       if(activeState) apply(activeState, activeLight);
       report({loading:false,quality:level});
     } catch(error) {
@@ -251,6 +260,7 @@ export function createStudio(container, report) {
       const group=parentPart(part),artwork=upload?null:artworkFor(entry,part,group);
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
+      m.userData.uvBounds.value.fromArray(artwork?.userData.uvBounds||[0,0,1,1]);
       m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
       m.userData.blend.value = upload ? 0 : native ? 0 : 1;
@@ -274,7 +284,7 @@ export function createStudio(container, report) {
     // Keep only textures referenced by the current mix: 3K canvases are expensive
     // on mobile, and switching editions must not retain every previous set.
     const used=new Set();model?.traverse(obj=>{if(obj.isMesh)used.add(obj.material.userData.artwork?.value);});
-    for(const [key,texture] of artworkCache)if(!used.has(texture)){texture?.userData.surface?.dispose();texture?.dispose();artworkCache.delete(key);}
+    for(const [key,texture] of artworkCache)if(!used.has(texture)){disposeBakedArtwork(texture);artworkCache.delete(key);}
   }
   let transition;
   function view(name, resetDistance = false) {
@@ -319,6 +329,6 @@ export function createStudio(container, report) {
     clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
     hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
-    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(texture=>{texture?.userData.surface?.dispose();texture?.dispose();});emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
+    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(disposeBakedArtwork);uvBaker?.dispose();emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }

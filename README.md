@@ -83,6 +83,10 @@ The original-model conversion requires Python's Pillow package. Its image proces
 
 Older shared builds using grouped selections are migrated to the individual-part format when opened.
 
+## Vector artwork and shared mapping
+
+All 24 listed editions include [SVG artwork masters](public/artwork-vectors/manifest.json). Artwork and finish maps are baked into reusable charts from the supplied model?s original UV layout. Desktop Original/High artwork uses 4K maps; mobile sizes adapt to limit memory. Each edition retains its distinct material regions and independent artwork finish. SVG artwork remains a reference-based approximation.
+
 ## Whole-controller appearance
 
 Choose **Whole controller** in Customize to apply a color, limited-edition appearance, or finish across every part, then adjust individual pieces. All 24 listed editions include artwork approximations, with fidelity varying by reference quality. Mapped editions also offer an independent **Artwork finish**, including metallic print against a matte shell. See [asset documentation](public/ASSETS.md) for the reference methods and known differences.
