@@ -1,24 +1,24 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#101311"><meta name="description" content="Mix DualSense controller parts, colors, and finishes in 3D."><title>DualSense Studio</title>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#090d16"><meta name="description" content="Mix DualSense controller parts, colors, and finishes in 3D."><title>DualSense Studio</title>
 <script id="source-build-redirect">
   location.replace(new URL('./docs/', location.href).href + location.search + location.hash);
 </script>
 <style>
-html,body{margin:0;min-height:100%;background:#101311;color:#e7eddf;color-scheme:dark}
-#boot-screen{position:fixed;inset:0;z-index:100;background:#101311;display:grid;place-items:center;padding:24px;font-family:system-ui,sans-serif;box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#090d16;color:#e5efff;color-scheme:dark}
+#boot-screen{position:fixed;inset:0;z-index:100;background:#090d16;display:grid;place-items:center;padding:24px;font-family:system-ui,sans-serif;box-sizing:border-box}
 #boot-screen[hidden]{display:none}
-#boot-card{width:100%;max-width:400px;padding:32px;box-sizing:border-box;border:1px solid #35402d;border-radius:16px;background:#1b201a}
-#boot-brand{font-size:12px;letter-spacing:2px;color:#c5f36b;margin:0 0 32px}
+#boot-card{width:100%;max-width:400px;padding:32px;box-sizing:border-box;border:1px solid #344a69;border-radius:16px;background:#131e2f}
+#boot-brand{font-size:12px;letter-spacing:2px;color:#78b6ff;margin:0 0 32px}
 #boot-title{font-size:25px;font-weight:500;letter-spacing:-.7px;margin:0 0 12px}
-#boot-message{font-size:14px;color:#a6b29b;line-height:1.7;margin:0 0 24px}
-#boot-reload{display:inline-block;padding:12px 18px;border-radius:7px;background:#c5f36b;color:#253313;text-decoration:none;font-size:13px;font-weight:600}
-#boot-state{font-size:11px;color:#829177;margin:24px 0 0}
+#boot-message{font-size:14px;color:#a0b3ce;line-height:1.7;margin:0 0 24px}
+#boot-reload{display:inline-block;padding:12px 18px;border-radius:7px;background:#78b6ff;color:#0e284a;text-decoration:none;font-size:13px;font-weight:600}
+#boot-state{font-size:11px;color:#829ab9;margin:24px 0 0}
 </style>
 </head>
 <body>
 <section id="boot-screen" aria-labelledby="boot-title">
- <div id="boot-card"><p id="boot-brand">DUALSENSE STUDIO</p><div role="status" aria-live="polite"><h1 id="boot-title">Loading studio…</h1><p id="boot-message">Getting your workspace ready.</p></div><a id="boot-reload" href="">Reload page</a><p id="boot-state">3D controller configurator</p><noscript><p style="color:#c5f36b;line-height:1.7">JavaScript is disabled. Enable it to open the 3D studio.</p></noscript></div>
+ <div id="boot-card"><p id="boot-brand">DUALSENSE STUDIO</p><div role="status" aria-live="polite"><h1 id="boot-title">Loading studio…</h1><p id="boot-message">Getting your workspace ready.</p></div><a id="boot-reload" href="">Reload page</a><p id="boot-state">3D controller configurator</p><noscript><p style="color:#78b6ff;line-height:1.7">JavaScript is disabled. Enable it to open the 3D studio.</p></noscript></div>
 </section>
 <div id="app"></div>
 <script>

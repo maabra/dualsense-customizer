@@ -10,6 +10,8 @@ An interactive 3D playground for mixing DualSense controller parts, colors, and 
 - Standard-color and limited-edition palettes, custom colors, and randomized combinations.
 - Startup model chooser recommending the source Original model, alongside separate High Definition and Low Definition GLB options.
 - Studio softbox reflections, area lighting, calibrated material finishes, and real cast shadows on both models.
+- Illuminated side light bars with subtle light spill, Player 1–4 color presets, white, and a custom color picker. Player palette references follow [PlayStation's controller color explanation](https://blog.de.playstation.com/?p=157987).
+- Transfer progress is bounded below 100% until the model is ready; missing transfer sizes use an indeterminate loading message.
 - Responsive desktop layout and expandable mobile customization panel.
 - Automatically saved color and finish selections, shareable build links, JSON export, and PNG snapshots.
 

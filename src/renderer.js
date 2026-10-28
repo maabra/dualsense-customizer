@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
+import { transferProgress } from './loading';
 
 export function createStudio(container, report) {
   const scene = new THREE.Scene();
@@ -13,7 +14,7 @@ export function createStudio(container, report) {
   renderer.setClearColor(0, 0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1;
+  renderer.toneMappingExposure = .95;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   container.appendChild(renderer.domElement);
@@ -38,30 +39,45 @@ export function createStudio(container, report) {
     const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(intensity)}));
     panel.position.set(x,y,z);panel.lookAt(0,0,0);room.add(panel);
   }
-  softbox(-3,4,4,4,5,0xfff4e5,5);
+  softbox(-3,4,4,4,5,0xf4f7ff,5);
   softbox(4,1,3,1.5,5,0xddeaff,3);
   softbox(0,4,-3,5,1.5,0xffffff,5);
   softbox(-4,-1,0,1,3,0xffffff,1.2);
   const environment = pmrem.fromScene(room, .025);
   scene.environment = environment.texture;
-  scene.environmentIntensity = .65;
+  scene.environmentIntensity = .8;
   room.traverse(obj=>{if(obj.isMesh){obj.geometry.dispose();obj.material.dispose();}});pmrem.dispose();
   RectAreaLightUniformsLib.init();
   function area(x,y,z,w,h,color,intensity) {
     const light=new THREE.RectAreaLight(color,intensity,w,h);light.position.set(x,y,z);light.lookAt(0,0,0);scene.add(light);
   }
-  area(-3,4,4,4,5,0xfff4e5,3);
-  area(4,1,3,2,4,0xddeaff,1.5);
+  area(-3,4,4,4,5,0xf4f7ff,4);
+  area(4,1,3,2,4,0xddeaff,1.8);
   area(0,4,-3,4,2,0xffffff,4);
-  scene.add(new THREE.HemisphereLight(0xdce7f2,0x252921,.35));
-  const key = new THREE.DirectionalLight(0xfff6eb,1.8);key.position.set(-3,5,4);
-  key.castShadow=true;key.shadow.mapSize.set(1024,1024);key.shadow.camera.left=-3;key.shadow.camera.right=3;
-  key.shadow.camera.top=3;key.shadow.camera.bottom=-3;key.shadow.camera.near=.1;key.shadow.camera.far=15;
-  key.shadow.normalBias=.015;key.shadow.bias=-.0002;key.shadow.radius=6;key.shadow.blurSamples=8;scene.add(key);
+  scene.add(new THREE.HemisphereLight(0xdce7f2,0x171c28,.45));
+  const key = new THREE.DirectionalLight(0xf5f8ff,1.1);key.position.set(-3,6,3);
+  const mobile=container.clientWidth<700;
+  key.castShadow=true;key.shadow.mapSize.set(mobile?512:1024,mobile?512:1024);key.shadow.camera.left=-2.2;key.shadow.camera.right=2.2;
+  key.shadow.camera.top=2.2;key.shadow.camera.bottom=-2.2;key.shadow.camera.near=.1;key.shadow.camera.far=15;
+  key.shadow.normalBias=.008;key.shadow.bias=-.0001;key.shadow.radius=mobile?6:10;key.shadow.blurSamples=mobile?8:16;scene.add(key);
   const shadow = new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.2,depthWrite:false}));
   shadow.receiveShadow=true;
-  shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-.86,0); scene.add(shadow);
+  shadow.rotation.x = -Math.PI/2; shadow.position.set(0,-.79,0); scene.add(shadow);
   const pivot = new THREE.Group(); pivot.rotation.set(-.12, -.16, -.09); scene.add(pivot);
+  // Local light spill follows the controller and is naturally occluded from the rear.
+  const barLights=[];
+  for(const x of [-.405,.405]) {
+    const lamp=new THREE.PointLight(0x0072ff,.045,.65,2);lamp.position.set(x,.42,.36);pivot.add(lamp);barLights.push(lamp);
+  }
+  const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
+  const glowContext=glowCanvas.getContext('2d');const glowGradient=glowContext.createRadialGradient(32,32,0,32,32,32);
+  glowGradient.addColorStop(0,'rgba(255,255,255,.7)');glowGradient.addColorStop(.25,'rgba(255,255,255,.25)');glowGradient.addColorStop(1,'rgba(255,255,255,0)');
+  glowContext.fillStyle=glowGradient;glowContext.fillRect(0,0,64,64);
+  const glowMap=new THREE.CanvasTexture(glowCanvas),barHalos=[];
+  for(const side of [-1,1])for(const y of [.29,.4,.51]) {
+    const halo=new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0x0072ff,blending:THREE.AdditiveBlending,transparent:true,opacity:.16,depthWrite:false,toneMapped:false}));
+    halo.position.set(side*(.35+(y-.29)*.24),y,.325);halo.scale.set(.15,.21,1);pivot.add(halo);barHalos.push(halo);
+  }
   const loader = new GLTFLoader();
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
@@ -83,13 +99,16 @@ export function createStudio(container, report) {
   async function load(level) {
     if (busy || (model && level === quality)) return;
     busy = true; report({loading:true,level});
+    let lastProgress=0;
     try {
       // Anchor assets to the JS module, not a potentially stale page URL.
       const modelUrl = new URL(/* @vite-ignore */ `../models/dualsense-${level}.glb`, import.meta.url);
       const progress = event => {
-        if(event.total) report({progress:Math.round(event.loaded/event.total*100),level});
+        const progress=transferProgress(event.loaded,event.total,lastProgress);
+        if(progress!==null) {lastProgress=progress;report({progress,level});}
       };
       const gltf = await loader.loadAsync(modelUrl.href, progress);
+      report({phase:'preparing',level});
       if(dead) {release(gltf.scene); return;}
       const next = gltf.scene;
       next.traverse(obj => {
@@ -117,7 +136,19 @@ export function createStudio(container, report) {
           material.side=THREE.FrontSide;
         }
         if(part !== 'light') {material.emissive.set(0); material.emissiveMap = null;}
+        else {material.map=null;material.emissiveMap=null;material.toneMapped=false;material.roughness=.35;}
         material.onBeforeCompile = shader => {
+          if(part==='light') {
+            shader.vertexShader='varying vec3 vBarPosition;\n'+shader.vertexShader;
+            shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvBarPosition = position;');
+            shader.fragmentShader='varying vec3 vBarPosition;\n'+shader.fragmentShader;
+            shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+              float ledMask = smoothstep(0.32, 0.36, abs(vBarPosition.x));
+              totalEmissiveRadiance *= ledMask;
+              diffuseColor.rgb = mix(vec3(0.015), diffuseColor.rgb, ledMask);
+            `);
+            return;
+          }
           shader.uniforms.studioTint = material.userData.tint;
           shader.uniforms.studioBlend = material.userData.blend;
           shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\n' + shader.fragmentShader;
@@ -142,12 +173,13 @@ export function createStudio(container, report) {
       console.error(error);
     } finally {busy = false;}
   }
-  function apply(state, light = '#91aaff') {
+  function apply(state, light = '#0072ff') {
     activeState = state; activeLight = light;
+    barLights.forEach(lamp=>lamp.color.set(light));barHalos.forEach(halo=>halo.material.color.set(light));
     model?.traverse(obj => {
       if(!obj.isMesh) return;
       const m = obj.material, part = m.name;
-      if(part === 'light') {m.emissive.set(light);m.emissiveIntensity=.8;m.color.set(light);return;}
+      if(part === 'light') {m.emissive.set(light);m.emissiveIntensity=1.5;m.color.set('#03050a');return;}
       if(!state[part]) return;
       const selection = state[part]; const entry = byId[selection.id];
       if(!entry && selection.id !== 'custom') return;
@@ -201,6 +233,6 @@ export function createStudio(container, report) {
     clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
     hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
-    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
+    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }
