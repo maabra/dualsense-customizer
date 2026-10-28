@@ -52,7 +52,7 @@
     <button class="settings-action" id="randomize" @click="randomize"><span>Randomize appearance<small>Explore a new combination of parts.</small></span><span aria-hidden="true">↗</span></button>
     <button class="settings-action" @click="reset"><span>Restore default design<small>Reset all parts and the light bar.</small></span><span aria-hidden="true">↺</span></button>
     <details class="build-details"><summary>Design summary <span>＋</span></summary><div id="build-list"><div v-for="p in advancedParts" :key="p[0]" class="build-item"><span>{{p[1]}}</span><b>{{byId[build[p[0]].id]?.name || 'Custom color'}}</b></div></div><button id="export" @click="exportBuild" class="outline">Export design (.json)</button></details>
-    </section><p class="asset-note">Unofficial artwork recreations. Some editions show colors only. <a href="./ASSETS.md" target="_blank">About the assets ↗</a></p>
+    </section><p class="asset-note">Unofficial artwork recreations. Some editions show colors only. <a href="./ASSETS.md" target="_blank">About the assets ↗</a> · <a href="./RIGHTS.md" target="_blank">Rights and testing notice ↗</a></p>
    </div>
    <div class="panel-footer"><button class="done-button" @click="finishEditing">Done</button><span class="instant-status"><span aria-hidden="true">✓</span> Changes apply instantly</span></div>
   </aside>

@@ -4,7 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
 import { transferProgress } from './loading';
-import { createEditionCanvas, artworkUVs, editionPartColor } from './edition-artwork';
+import { createEditionCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 export function createStudio(container, report) {
   const scene = new THREE.Scene();
@@ -92,9 +92,9 @@ export function createStudio(container, report) {
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
   function artworkFor(entry,part,group) {
     if(entry?.artwork!=='recreated')return null;
-    const key=entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
+    const key=quality+'|'+entry.id+'|'+(['buttons','dpad'].includes(group)?part:group);
     if(!artworkCache.has(key)) {
-      const canvas=createEditionCanvas(entry.id,part,group);
+      const canvas=createEditionCanvas(entry.id,part,group,quality);
       if(!canvas){artworkCache.set(key,null);return null;}
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());artworkCache.set(key,texture);
@@ -133,7 +133,8 @@ export function createStudio(container, report) {
       const next = gltf.scene;
       next.traverse(obj => {
         if(!obj.isMesh) return;
-        const material = obj.material.clone(); obj.material = material;
+        const material = new THREE.MeshPhysicalMaterial();
+        THREE.MeshStandardMaterial.prototype.copy.call(material,obj.material);obj.material = material;
         obj.castShadow=true;obj.receiveShadow=true;
         material.userData.originalRoughness=material.roughness;
         material.userData.originalMetalness=material.metalness;
@@ -145,6 +146,7 @@ export function createStudio(container, report) {
         material.userData.tint = {value:new THREE.Color('#ffffff')};
         material.userData.blend = {value:0};
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
+        material.userData.paintFinish={value:0};
         // Clear button caps need their original alpha to reveal the symbols below.
         material.transparent = ['buttons','dpad','details'].includes(group);
         material.depthWrite = !['buttons','dpad'].includes(group);
@@ -175,7 +177,7 @@ export function createStudio(container, report) {
           shader.uniforms.studioBlend = material.userData.blend;
           shader.uniforms.studioArtwork=material.userData.artwork;shader.uniforms.studioArtworkEnabled=material.userData.artworkEnabled;
           shader.vertexShader='attribute vec2 studioArtworkUv;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
-          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvEditionUV=studioArtworkUv;\nvEditionFacing=max(0.0,normal.z);');
+          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvEditionUV=studioArtworkUv;\nvEditionFacing=max(0.0,${group==='rear'?'-normal.z':'normal.z'});`);
           shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
             #include <map_fragment>
@@ -184,6 +186,16 @@ export function createStudio(container, report) {
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
             float artMask=studioArtworkEnabled*editionArt.a*smoothstep(0.25,0.75,vEditionFacing);
             diffuseColor.rgb=mix(diffuseColor.rgb,editionArt.rgb*(0.9+detail*0.1),artMask);
+          `);
+          // Printed claw paint catches a different highlight from its matte substrate.
+          // Apply only when the edition finish is selected; manual finish overrides win.
+          shader.uniforms.studioPaintFinish=material.userData.paintFinish;
+          shader.fragmentShader='uniform float studioPaintFinish;\n'+shader.fragmentShader;
+          shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+            vec3 paint=texture2D(studioArtwork,vEditionUV).rgb;
+            float paintMask=studioArtworkEnabled*smoothstep(0.25,0.75,vEditionFacing)*studioPaintFinish;
+            float pigment=smoothstep(0.35,0.65,max(paint.r,max(paint.g,paint.b)));
+            roughnessFactor=mix(roughnessFactor,mix(0.67,0.32,pigment),paintMask);
           `);
         };
       });
@@ -222,9 +234,18 @@ export function createStudio(container, report) {
       const original=native && selection.finish==='original' && !upload;
       m.roughness = original ? m.userData.originalRoughness : {matte:.68,satin:.4,metallic:.26,gloss:.14}[finish] || .7;
       m.metalness = original ? m.userData.originalMetalness : finish === 'metallic' ? .85 : 0;
+      const surface=selection.finish==='original'&&!upload?editionSurface(entry?.id,group):null;
+      m.clearcoat=surface?.clearcoat||(finish==='gloss'?.55:0);
+      m.clearcoatRoughness=.25;
+      if(surface){m.roughness=surface.roughness;m.metalness=surface.metalness;}
+      m.userData.paintFinish.value=surface&&entry?.id.startsWith('wolverine')&&['shell','touchpad'].includes(group)?1:0;
       m.roughnessMap = native && selection.finish === 'original' ? m.userData.originalRoughnessMap : null;
       m.needsUpdate = true;
     });
+    // Keep only textures referenced by the current mix: 3K canvases are expensive
+    // on mobile, and switching editions must not retain every previous set.
+    const used=new Set();model?.traverse(obj=>{if(obj.isMesh)used.add(obj.material.userData.artwork?.value);});
+    for(const [key,texture] of artworkCache)if(!used.has(texture)){texture?.dispose();artworkCache.delete(key);}
   }
   let transition;
   function view(name, resetDistance = false) {

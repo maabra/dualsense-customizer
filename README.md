@@ -85,6 +85,8 @@ Older shared builds using grouped selections are migrated to the individual-part
 
 ## Credits
 
+This is an unofficial testing prototype. The project claims no ownership of third-party controller designs, artwork, logos, trademarks, or promotional photographs. See [asset rights and the testing-purpose notice](public/RIGHTS.md). The supplied model's CC BY 4.0 attribution is preserved.
+
 “Playstation 5 Dualsense” by [AHarmlessPotato](https://sketchfab.com/AHarmlessPotato), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). [Original model](https://sketchfab.com/3d-models/playstation-5-dualsense-878c1f882808477ab81c2fe86d5a3936). Modifications include grouping and splitting surfaces for independent customization and normalizing root transforms.
 
 An unofficial fan project, unaffiliated with Sony Interactive Entertainment. Controller designs, edition artwork, and trademarks belong to their respective owners. Google Fonts are used with system-font fallbacks.

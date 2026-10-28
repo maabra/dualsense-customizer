@@ -1,16 +1,18 @@
-// Hand-drawn recreations from official product references, not extracted official maps.
+import referenceTraces from './reference-traces.json';
+// Reference-based recreations, not extracted official production maps.
 // A secondary UV set projects the front artwork onto the supplied model's surfaces.
 export const recreatedEditions = new Set(['anniversary','gt','wolverine-yellow','wolverine-metal','astro','astro-joyful','spiderman','godofwar']);
 const neutral = '#24262c';
 export function editionPartColor(entry, part, group) {
   const id=entry.id;
   if(id.startsWith('wolverine')) {
+    if(group==='ps')return id==='wolverine-yellow'?'#e8bd29':'#b7babf';
     if(group==='trim'||group==='sticks')return id==='wolverine-yellow'?'#f5c72d':group==='sticks'?'#24262c':'#aeb1b5';
     return neutral;
   }
-  if(id==='anniversary')return ['buttons','sticks','trim','triggers','ps'].includes(group)?'#626366':'#b5b5ae';
-  if(id==='gt')return ['shell','rear','touchpad'].includes(group)?'#e7ebe7':'#202226';
-  if(id.startsWith('astro'))return group==='touchpad'?'#111927':['sticks','triggers','buttons','trim'].includes(group)?'#1673dc':'#e8edf1';
+  if(id==='anniversary')return ['buttons','dpad','sticks','trim','triggers','ps'].includes(group)?'#606875':'#a1a4ad';
+  if(id==='gt')return ['shell','touchpad'].includes(group)?'#e7ebe7':'#202226';
+  if(id.startsWith('astro'))return group==='touchpad'?'#111927':group==='triggers'?'#1673dc':'#e8edf1';
   if(id==='spiderman')return group==='buttons'?'#d8dce1':'#17181d';
   if(id==='godofwar')return ['touchpad','shell','rear'].includes(group)?'#dce6ed':'#263f5a';
   return null;
@@ -63,23 +65,24 @@ function faceSymbol(ctx,part,color,w,h) {
   else if(part==='button-cross'){line(ctx,[[cx-r*.72,cy-r*.72],[cx+r*.72,cy+r*.72]],color,w*.045);line(ctx,[[cx+r*.72,cy-r*.72],[cx-r*.72,cy+r*.72]],color,w*.045);}
 }
 
-export function createEditionCanvas(id,part,group) {
-  if(!recreatedEditions.has(id)||!['shell','touchpad','trim','buttons','dpad','ps'].includes(group))return null;
+export function createEditionCanvas(id,part,group,detail='low') {
+  if(!recreatedEditions.has(id)||!['shell','rear','touchpad','trim','buttons','dpad','ps'].includes(group))return null;
   // Controls use local UVs; all shell and trim halves share a continuous front layout.
   const touch=group==='touchpad',button=group==='buttons'||group==='dpad'||part==='ps';
   const canvas=document.createElement('canvas');canvas.width=button?256:touch?1024:1536;canvas.height=button?256:touch?552:998;
+  if(detail!=='low'){canvas.width*=2;canvas.height*=2;}
   const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
   const metal=id==='wolverine-metal',wolverine=id.startsWith('wolverine');
   let base='#b5b5ae';
   if(wolverine)base=group==='trim'?(metal?'#b6b9bd':'#f5c72d'):neutral;
-  if(id==='gt')base=['trim','buttons','dpad'].includes(group)?'#1e2226':'#ecede9';
-  if(id.startsWith('astro'))base=touch?'#111927':button?'#1772da':'#eef1f4';
+  if(id==='gt')base=['trim','rear','buttons','dpad'].includes(group)?'#1e2226':'#ecede9';
+  if(id.startsWith('astro'))base=touch?'#111927':'#eef1f4';
   if(id==='spiderman')base=group==='buttons'?'#dfe2e8':'#17181d';
   if(id==='godofwar')base=touch||group==='shell'?'#dee8ef':'#293f57';
-  if(id==='anniversary'&&['buttons','ps','trim'].includes(group))base='#626366';
+  if(id==='anniversary')base=['buttons','dpad','ps','trim'].includes(group)?'#606875':'#a1a4ad';
   ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
   if(group==='buttons') {
-    let ink=wolverine?(metal?'#b4b4b5':'#e1b62c'):id.startsWith('astro')?'#e9f2ff':id==='spiderman'?'#6c747f':'#d8dce0';
+    let ink=wolverine?(metal?'#b4b4b5':'#e1b62c'):id.startsWith('astro')?'#94c6dd':id==='spiderman'?'#6c747f':'#d8dce0';
     if(id==='anniversary')ink={'button-triangle':'#45b8a5','button-circle':'#e86b74','button-cross':'#76a3df','button-square':'#d48fba'}[part];
     faceSymbol(ctx,part,ink,w,h);return canvas;
   }
@@ -88,11 +91,53 @@ export function createEditionCanvas(id,part,group) {
       ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);
       polygon(ctx,[[-18,-7],[18,-7],[0,-25]],metal?'#b8b9bb':'#e5bd35');ctx.restore();
     }
+    if(id.startsWith('astro')) {
+      const angle={'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part];
+      ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle);polygon(ctx,[[-15,-9],[15,-9],[0,-26]],'#94c6dd');ctx.restore();
+    }
     return canvas;
   }
-  if(part==='ps')return null;
+  if(part==='ps') {
+    if(id!=='anniversary')return null;
+    ctx.fillStyle='#e24548';ctx.fillRect(0,0,w,h*.62);
+    ctx.fillStyle='#e4bd38';ctx.fillRect(0,h*.62,w*.36,h);
+    ctx.fillStyle='#4286bd';ctx.fillRect(w*.36,h*.62,w*.32,h);
+    ctx.fillStyle='#3d9b7d';ctx.fillRect(w*.68,h*.62,w*.32,h);return canvas;
+  }
+  if(group==='rear') {
+    const labelInk=['gt','wolverine-yellow','wolverine-metal','spiderman'].includes(id)?'#666a73':'#787f8a';
+    text(ctx,'SONY',w*.5,h*.075,w*.026,labelInk,'700');
+    text(ctx,'Sony Interactive Entertainment Inc.',w*.5,h*.445,w*.008,labelInk,'400');
+    text(ctx,'SONY®',w*.5,h*.47,w*.014,labelInk,'700');
+    if(wolverine)for(const side of [-1,1]) {
+      ctx.save();if(side>0){ctx.translate(w,0);ctx.scale(-1,1);}
+      polygon(ctx,[[0,h*.69],[w*.21,h*.72],[w*.27,h],[0,h]],metal?'#b7babf':'#e8bd29');ctx.restore();
+    }
+    if(id==='gt') {
+      ctx.save();ctx.translate(w*.5,h*.32);ctx.transform(1,0,-.22,1,0,0);
+      text(ctx,'GT',0,0,w*.045,'#b1b5ba','900');ctx.restore();
+    }
+    // Keep unknown regulatory text and serial numbers out of the recreation.
+    if(id.startsWith('astro')) {
+      ctx.fillStyle='#b2bbc5';ctx.beginPath();ctx.roundRect(w*.455,h*.27,w*.09,h*.09,w*.018);ctx.fill();
+      ctx.strokeStyle='#b2bbc5';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(w*.5,h*.27);ctx.lineTo(w*.5,h*.24);ctx.stroke();
+      ctx.fillStyle=base;for(const x of [.482,.518]){ctx.beginPath();ctx.arc(w*x,h*.31,w*.008,0,Math.PI*2);ctx.fill();}
+    }
+    return canvas;
+  }
   if(wolverine) {
     const ink=metal?'#c9cacc':'#f7cb33';
+    if(touch||group==='shell') {
+      const project=([x,y])=>touch?[(x+.405)/.81*w,(.642-y)/.437*h]:[(x+1)/2*w,(.65-y)/1.3*h];
+      for(const path of referenceTraces.scratches)polygon(ctx,path.map(project),'#55565b');
+      for(const path of referenceTraces.claws)polygon(ctx,path.map(project),ink);
+      if(group==='shell') {
+        // Create/Options legends sit on the shell, above their separate buttons.
+        for(let i=-1;i<=1;i++)line(ctx,[project([.452,.565+i*.011]),project([.482,.565+i*.011])],ink,w*.0014);
+        for(const a of [-.7,0,.7])line(ctx,[project([-.467+Math.sin(a)*.034,.565+Math.cos(a)*.016]),project([-.467+Math.sin(a)*.045,.565+Math.cos(a)*.031])],ink,w*.0014);
+      }
+      return canvas;
+    }
     if(touch)slashes(ctx,w,h,ink);
     if(group==='shell') {
       const random=rng(122);
@@ -123,7 +168,11 @@ export function createEditionCanvas(id,part,group) {
     if(touch) {
       ctx.fillStyle='#55c7fb';
       if(id==='astro-joyful') {for(const x of [.32,.68])line(ctx,[[w*(x-.075),h*.55],[w*x,h*.39],[w*(x+.075),h*.55]],'#5ed3ff',w*.035);}
-      else for(const x of [.33,.67]){ctx.beginPath();ctx.roundRect(w*x-w*.045,h*.27,w*.09,h*.44,w*.04);ctx.fill();}
+      else for(const x of [.33,.67]) {
+        const radius=h*.145;
+        for(let dy=-radius;dy<=radius;dy+=h*.016)for(let dx=-radius;dx<=radius;dx+=h*.016)
+          if(dx*dx+dy*dy<radius*radius){ctx.beginPath();ctx.arc(w*x+dx,h*.48+dy,h*.0055,0,Math.PI*2);ctx.fill();}
+      }
     }
     if(group==='shell') {
       for(const side of [-1,1]){
@@ -131,6 +180,12 @@ export function createEditionCanvas(id,part,group) {
         polygon(ctx,[[x,h*.54],[x+w*.13,h*.6],[x+w*.12,h],[x-w*.025,h]],'#1774d8');
         line(ctx,[[x+w*.08,h*.17],[x+w*.11,h*.29],[x+w*.08,h*.37],[x+w*.12,h*.5]],'#8aafcb',2);
         line(ctx,[[x+w*.03,h*.23],[x+w*.04,h*.31],[x+w*.075,h*.34]],'#b8cddc',2);
+      }
+      // Subtle molded circuit channels around both analog sticks and the mute key.
+      const p=([x,y])=>[(x+1)/2*w,(.65-y)/1.3*h];
+      for(const side of [-1,1]) {
+        for(const offset of [0,.027])line(ctx,[[side*.48,-.03],[side*.48,-.12-offset],[side*.35,-.2-offset],[side*.14,-.2-offset],[side*.09,-.15]].map(p),'#c5d3df',w*.0012);
+        for(const y of [-.115,-.15]){const [x,cy]=p([side*.46,y]);ctx.strokeStyle='#a6b9ca';ctx.lineWidth=w*.001;ctx.beginPath();ctx.arc(x,cy,w*.004,0,Math.PI*2);ctx.stroke();}
       }
     }
   }
@@ -157,7 +212,6 @@ export function createEditionCanvas(id,part,group) {
       ctx.fillStyle='#e2ecf3';ctx.beginPath();ctx.arc(w*.62,h*.4,4,0,Math.PI*2);ctx.fill();
     }
   }
-  if(id==='anniversary'&&group==='shell')text(ctx,'30ᵗʰ',w*.83,h*.68,h*.023,'#85857f','600');
   return canvas;
 }
 
@@ -165,11 +219,23 @@ export function artworkUVs(geometry,group) {
   const positions=geometry.attributes.position,index=geometry.index;
   let x0=-1,x1=1,y0=-.65,y1=.65;
   if(group==='touchpad'){x0=-.405;x1=.405;y0=.205;y1=.642;}
-  else if(group==='buttons'||group==='dpad') {
+  else if(group==='buttons'||group==='dpad'||group==='ps') {
     x0=y0=Infinity;x1=y1=-Infinity;
     for(let i=0;i<index.count;i++){const id=index.getX(i),x=positions.getX(id),y=positions.getY(id);x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);}
   }
   const uv=new Float32Array(positions.count*2);
-  for(let i=0;i<positions.count;i++){uv[i*2]=(positions.getX(i)-x0)/(x1-x0);uv[i*2+1]=(positions.getY(i)-y0)/(y1-y0);}
+  for(let i=0;i<positions.count;i++){const u=(positions.getX(i)-x0)/(x1-x0);uv[i*2]=group==='rear'?1-u:u;uv[i*2+1]=(positions.getY(i)-y0)/(y1-y0);}
   return uv;
+}
+
+// Rubber, printed paint and molded plastic should not share one finish.
+export function editionSurface(id,group) {
+  if(!recreatedEditions.has(id))return null;
+  if(group==='sticks')return {roughness:.88,metalness:0,clearcoat:0};
+  if(group==='buttons'||group==='dpad')return {roughness:.25,metalness:0,clearcoat:.35};
+  if(group==='rear')return {roughness:.72,metalness:0,clearcoat:0};
+  if(id.startsWith('astro')&&group==='triggers')return {roughness:.2,metalness:0,clearcoat:.7};
+  if(group==='touchpad')return {roughness:.56,metalness:0,clearcoat:.08};
+  if(id==='wolverine-metal'&&group==='trim')return {roughness:.34,metalness:.7,clearcoat:.15};
+  return {roughness:.53,metalness:0,clearcoat:.12};
 }

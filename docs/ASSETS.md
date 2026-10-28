@@ -6,7 +6,7 @@ The configurator ships with the provided default DualSense models and their orig
 
 `src/edition-artwork.js` draws Gran Turismo racing stripes and badges, both Wolverine claw treatments, the 30th Anniversary colored face-button symbols, both Astro Bot eye treatments and blue detailing, Spider-Man symbiote strokes and emblem, and simplified Ragnarök bear/wolf motifs. These are best-effort approximations; small logos, line placement, finish, and some rear details differ from the official designs.
 
-The renderer adds a secondary front-projection UV attribute. Front shells and trim share the controller-wide layout, touchpads have dedicated local bounds, and each face button uses its own local projection. Artwork is restricted to front-facing surfaces, while curved sides retain the selected part color. The original UVs and normal maps are retained. Hand-drawn maps are recreated on demand, cached locally, and restored from edition IDs in saved builds. Texture uploads override recreated artwork for their selected pieces.
+The renderer adds a secondary front-projection UV attribute. Front shells and trim share the controller-wide layout, touchpads have dedicated local bounds, and each face button uses its own local projection. Front and rear artwork use opposite facing masks, with mirrored rear projection so rear markings read correctly. Curved sides retain the selected part color. The original UVs and normal maps are retained. Hand-drawn maps are recreated on demand, cached locally, and restored from edition IDs in saved builds. Texture uploads override recreated artwork for their selected pieces.
 
 The 25-part icon atlas is at `icons/dualsense-parts-atlas-v1.png`; its generation prompt is in `icons/README.md`.
 
@@ -47,3 +47,11 @@ Choose a part, open Custom, and import a PNG, JPG, or WebP (up to 20 MB). Import
 - Gran Turismo edition: https://blog.playstation.com/2026/10/14/gran-turismo-7s-spec-iv-part-1-launches-today-and-a-first-look-at-dualsense-wireless-controller-gran-turismo-limited-edition/
 
 Official artwork and trademarks remain the property of their owners. This is an unofficial fan configurator. The interface does not verify physical fit or availability of replacement parts.
+
+## Detailed reference pass
+
+Wolverine claw paint and visible scratch contours are traced from an official front photograph, rather than generated randomly. Rear grip tips use the official rear views. Astro controls use white substrates and pale blue markings, with dotted circular eyes for the original edition. Anniversary controls use a cooler gray and colored PS-button regions. Original/high models use 3072-pixel body maps; Low Definition uses 1536 pixels. Maps are released when no longer used by the current mix.
+
+Rubber sticks, matte rear plastic, glossy button caps, painted touchpads, and metallic trim use separate physical material profiles. Wolverine painted claw regions have a different roughness from their substrate. Surface values are artistic estimates, not measurements. The supplied normal maps remain intact.
+
+The inspected front, top, oblique, and rear image URLs and known limitations are recorded in [texture-references.json](./texture-references.json). Some logos and the Spider-Man/Ragnarok illustrations remain simplified; this project does not claim microscopic accuracy. See [RIGHTS.md](./RIGHTS.md) for ownership, attribution and the testing-purpose notice.
