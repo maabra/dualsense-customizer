@@ -211,11 +211,200 @@
         "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-GTA6-PR-01-W-16x9-01-21aug26-_en"
       }
     ],
-    "method": "Nine reference contour layouts; seven simplified illustrations. See ASSETS.md for the per-edition limitations.",
+    "method": "See secondDetailPass for the expanded contour extraction and material methods.",
     "otherDesignSources": {
       "hogwarts": "https://www.playstation.com/en-gb/local/play-with-the-champions/",
       "concord": "https://www.gamespot.com/articles/sonys-new-limited-edition-ps5-controller-is-its-best-looking-one-so-far/1100-6525289/",
       "yotei-gold": "https://blog.playstation.com/2025/07/10/first-look-ps5-ghost-of-yotei-limited-edition-console-designs/"
     }
+  },
+  "secondDetailPass": {
+    "sources": {
+      "pages": {
+        "spiderman": "https://www.playstation.com/en-gb/games/marvels-spider-man-2/limited-editions/",
+        "godofwar": "https://blog.playstation.com/2022/09/13/the-god-of-war-ragnarok-story-trailer-is-now-live/",
+        "yotei-gold": "https://blog.playstation.com/2025/07/10/first-look-ps5-ghost-of-yotei-limited-edition-console-designs/"
+      },
+      "images": [
+        {
+          "edition": "spiderman",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/spider-man-2-limited-edition-console-dualsense-image-block-01-en-25jul23?wid=1800",
+          "file": "spiderman-4.jpg"
+        },
+        {
+          "edition": "spiderman",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/spider-man-2-limited-edition-dualsense-image-block-01-en-25jul23?wid=1800",
+          "file": "spiderman-5.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/3e902e25a5ef363aa4c7b39b7d5b31b6a4116851.jpg",
+          "file": "godofwar-0.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/1ab220557273f7db26f4f10116670a6149177eb9.jpg",
+          "file": "godofwar-1.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/edc2a72913897b8789c1294a65706fe83d677796.jpg",
+          "file": "godofwar-2.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/2d542341c22b385787a639322d68347d595d7d2a.jpg",
+          "file": "godofwar-3.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/99229dc6f6d7c965ba48289cccd00571aa811025.jpg",
+          "file": "godofwar-4.jpg"
+        },
+        {
+          "edition": "godofwar",
+          "url": "https://blog.playstation.com/tachyon/2022/09/9dc7a781ec610308d024f3d78ef2c8b8ed3a11d3.jpg",
+          "file": "godofwar-5.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/f273ee8ff7a5e764e4ce2adfdb9c1a20a1e30068.jpg",
+          "file": "yotei-gold-0.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/65ca949b3abd6eaa295c04f13ec160d45c60cd27.jpg",
+          "file": "yotei-gold-1.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/9153aa3e8bcf67da14c2682480822ca64cc2d5c2.jpg",
+          "file": "yotei-gold-2.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/2d439350cddebe978d158c41ea2caac397faa9e3.jpg",
+          "file": "yotei-gold-3.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/62fddd5cce414cd084cdfabef14552b2d253e4e6.jpg",
+          "file": "yotei-gold-4.jpg"
+        },
+        {
+          "edition": "yotei-gold",
+          "url": "https://blog.playstation.com/tachyon/2025/07/64d6c2ff812e8f865c835222ede374dfb8399781.jpg",
+          "file": "yotei-gold-5.jpg"
+        },
+        {
+          "edition": "marathon",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-02-16x9-01-28feb26$en?wid=1600",
+          "file": "marathon-angle-0.jpg"
+        },
+        {
+          "edition": "marathon",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-04-16x9-01-28feb26$en?wid=1600",
+          "file": "marathon-angle-1.jpg"
+        },
+        {
+          "edition": "marathon",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-03-16x9-01-28feb26$en?wid=1600",
+          "file": "marathon-angle-2.jpg"
+        },
+        {
+          "edition": "marathon",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-Marathon-05-16x9-01-28feb26$en?wid=1600",
+          "file": "marathon-angle-3.jpg"
+        },
+        {
+          "edition": "deathstranding",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-02-16x9-01-28feb26$en?wid=1600",
+          "file": "deathstranding-angle-0.jpg"
+        },
+        {
+          "edition": "deathstranding",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-04-16x9-01-28feb26$en?wid=1600",
+          "file": "deathstranding-angle-1.jpg"
+        },
+        {
+          "edition": "deathstranding",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-03-16x9-01-28feb26$en?wid=1600",
+          "file": "deathstranding-angle-2.jpg"
+        },
+        {
+          "edition": "deathstranding",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualsenseController-DeathStranding2-05-16x9-01-28feb26$en?wid=1600",
+          "file": "deathstranding-angle-3.jpg"
+        },
+        {
+          "edition": "yotei-black",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY02_Black-16x9-01-28feb26$en?wid=1600",
+          "file": "yotei-black-angle-0.jpg"
+        },
+        {
+          "edition": "yotei-black",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY04_Black-16x9-01-28feb26$en?wid=1600",
+          "file": "yotei-black-angle-1.jpg"
+        },
+        {
+          "edition": "yotei-black",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY03_Black-16x9-01-28feb26$en?wid=1600",
+          "file": "yotei-black-angle-2.jpg"
+        },
+        {
+          "edition": "yotei-black",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-GoY05_Black-16x9-01-28feb26$en?wid=1600",
+          "file": "yotei-black-angle-3.jpg"
+        },
+        {
+          "edition": "007",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-LE-FirstLight-PR-02-16x9-01-7apr26$en?wid=1600",
+          "file": "007-angle-0.jpg"
+        },
+        {
+          "edition": "007",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-LE-FirstLight-PR-04-16x9-01-7apr26$en?wid=1600",
+          "file": "007-angle-1.jpg"
+        },
+        {
+          "edition": "007",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-LE-FirstLight-PR-03-16x9-01-7apr26$en?wid=1600",
+          "file": "007-angle-2.jpg"
+        },
+        {
+          "edition": "007",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DualSense-LE-FirstLight-PR-05-16x9-01-7apr26$en?wid=1600",
+          "file": "007-angle-3.jpg"
+        },
+        {
+          "edition": "lisa",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-02-16x9-01-08aug26-_en?wid=1600",
+          "file": "lisa-angle-0.jpg"
+        },
+        {
+          "edition": "lisa",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-04-16x9-01-08aug26-_en?wid=1600",
+          "file": "lisa-angle-1.jpg"
+        },
+        {
+          "edition": "lisa",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-03-16x9-01-08aug26-_en?wid=1600",
+          "file": "lisa-angle-2.jpg"
+        },
+        {
+          "edition": "lisa",
+          "url": "https://gmedia.playstation.com/is/image/SIEPDC/DUALSENSE-LE-LISA-PR-05-16x9-01-08aug26-_en?wid=1600",
+          "file": "lisa-angle-3.jpg"
+        }
+      ]
+    },
+    "method": "15 front layouts, five rear layouts and three dedicated touchpad homographies in scripts/trace-catalog.py; Wolverine contours remain in scripts/trace-reference.py.",
+    "materials": "Separate estimated roughness, metalness, clearcoat and print-coverage maps. Original supplied normal maps preserved.",
+    "limits": [
+      "Shared base geometry; projected layouts, not factory UVs.",
+      "Pixel and contour fidelity limited by photograph scale, camera perspective and printed contrast.",
+      "Unverified microscopic embossing, ink thickness, clear windows and serial/regulatory labels are not claimed as reconstructed.",
+      "Hogwarts, LeBron, Concord and Yotei Gold artwork remains simplified."
+    ]
   }
 }

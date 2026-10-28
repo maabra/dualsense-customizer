@@ -1,5 +1,5 @@
 import referenceTraces from './reference-traces.json';
-import {additionalEditions,catalogPartColor,drawCatalogArtwork} from './catalog-artwork';
+import {additionalEditions,catalogPartColor,drawCatalogArtwork,drawTracedArtwork} from './catalog-artwork';
 // Reference-based recreations, not extracted official production maps.
 // A secondary UV set projects the front artwork onto the supplied model's surfaces.
 export const recreatedEditions = new Set(['anniversary','gt','wolverine-yellow','wolverine-metal','astro','astro-joyful','spiderman','godofwar',...additionalEditions]);
@@ -16,7 +16,7 @@ export function editionPartColor(entry, part, group) {
   if(id==='gt')return ['shell','touchpad'].includes(group)?'#e7ebe7':'#202226';
   if(id.startsWith('astro'))return group==='touchpad'?'#111927':group==='triggers'?'#1673dc':'#e8edf1';
   if(id==='spiderman')return group==='buttons'?'#d8dce1':'#17181d';
-  if(id==='godofwar')return ['touchpad','shell','rear'].includes(group)?'#dce6ed':'#263f5a';
+  if(id==='godofwar')return group==='shell'?'#35447c':['buttons','dpad','sticks','triggers','create','options'].includes(group)?'#252934':'#dce6ed';
   return null;
 }
 
@@ -80,7 +80,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(id==='gt')base=['trim','rear','buttons','dpad'].includes(group)?'#1e2226':'#ecede9';
   if(id.startsWith('astro'))base=touch?'#111927':'#eef1f4';
   if(id==='spiderman')base=group==='buttons'?'#dfe2e8':'#17181d';
-  if(id==='godofwar')base=touch||group==='shell'?'#dee8ef':'#293f57';
+  if(id==='godofwar')base=group==='shell'?'#35447c':['buttons','dpad'].includes(group)?'#252934':'#dee8ef';
   if(id==='anniversary')base=['buttons','dpad','ps','trim'].includes(group)?'#606875':'#a1a4ad';
   if(additionalEditions.has(id))base=catalogPartColor(id,group);
   ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
@@ -99,6 +99,10 @@ export function createEditionCanvas(id,part,group,detail='low') {
       const angle={'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part];
       ctx.save();ctx.translate(w/2,h/2);ctx.rotate(angle);polygon(ctx,[[-15,-9],[15,-9],[0,-26]],'#94c6dd');ctx.restore();
     }
+    if(!wolverine&&!id.startsWith('astro')) {
+      ctx.save();ctx.translate(w/2,h/2);ctx.rotate({'dpad-up':0,'dpad-right':Math.PI/2,'dpad-down':Math.PI,'dpad-left':-Math.PI/2}[part]);
+      polygon(ctx,[[-18,-7],[18,-7],[0,-25]],id==='fortnite'?'#60869c':'#90949c');ctx.restore();
+    }
     return canvas;
   }
   if(part==='ps') {
@@ -109,6 +113,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
     ctx.fillStyle='#3d9b7d';ctx.fillRect(w*.68,h*.62,w*.32,h);return canvas;
   }
   if(additionalEditions.has(id)) {drawCatalogArtwork(ctx,id,group,w,h);return canvas;}
+  if(drawTracedArtwork(ctx,id,group,w,h))return canvas;
   if(group==='rear') {
     const labelInk=['gt','wolverine-yellow','wolverine-metal','spiderman'].includes(id)?'#666a73':'#787f8a';
     text(ctx,'SONY',w*.5,h*.075,w*.026,labelInk,'700');
@@ -238,11 +243,11 @@ export function editionSurface(id,group) {
   if(!recreatedEditions.has(id))return null;
   if(group==='sticks')return {roughness:.88,metalness:0,clearcoat:0};
   if(group==='buttons'||group==='dpad')return {roughness:.25,metalness:0,clearcoat:.35};
+  if(id==='007'&&['shell','rear'].includes(group))return {roughness:.34,metalness:.72,clearcoat:.18};
+  if(id==='lisa'&&['shell','trim','rear'].includes(group))return {roughness:.28,metalness:.18,clearcoat:.6};
   if(group==='rear')return {roughness:.72,metalness:0,clearcoat:0};
   if(id.startsWith('astro')&&group==='triggers')return {roughness:.2,metalness:0,clearcoat:.7};
   if(group==='touchpad')return {roughness:.56,metalness:0,clearcoat:.08};
-  if(id==='007'&&group==='shell')return {roughness:.34,metalness:.72,clearcoat:.18};
-  if(id==='lisa'&&['shell','trim'].includes(group))return {roughness:.28,metalness:.18,clearcoat:.6};
   if(id==='concord')return {roughness:.7,metalness:0,clearcoat:.02};
   if(id==='wolverine-metal'&&group==='trim')return {roughness:.34,metalness:.7,clearcoat:.15};
   return {roughness:.53,metalness:0,clearcoat:.12};

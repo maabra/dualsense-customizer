@@ -120,7 +120,7 @@ function setAdvanced(value) {
   expanded.value=true;
 }
 function setPrintFinish(printFinish){for(const key of selectedTargets.value)build[key]={...build[key],printFinish};}
-const hasArtworkFinish=computed(()=>['wolverine-yellow','wolverine-metal','ff16','hogwarts','yotei-gold','lastofus'].includes(currentEntry.value?.id)&&selectedTargets.value.some(key=>['shell','touchpad'].includes(parentPart(key))));
+const hasArtworkFinish=computed(()=>['wolverine-yellow','wolverine-metal','ff16','hogwarts','yotei-gold','lastofus','spiderman','godofwar','marathon','deathstranding','gt','lisa','yotei-black','concord'].includes(currentEntry.value?.id)&&selectedTargets.value.some(key=>['shell','touchpad'].includes(parentPart(key))));
 function setFinish(finish) {for(const key of selectedTargets.value)build[key]={...build[key],finish};}
 function clearSelectedUploads() {studio?.clearTexture(selectedPart.value);for(const key of selectedTargets.value)delete uploaded[key];}
 

@@ -5,7 +5,7 @@ const black='#24262c',white='#e8e9e6';
 export function catalogPartColor(id,group) {
  const control=['buttons','dpad','sticks','triggers','trim','ps','create','options','mute'].includes(group);
  if(id==='lastofus')return ['trim','sticks'].includes(group)?'#cbd0d7':black;
- if(id==='fortnite')return control?black:'#56b9eb';
+ if(id==='fortnite')return ['buttons','dpad','shell','touchpad'].includes(group)?'#56b9eb':black;
  if(id==='007')return control?black:'#cbb276';
  if(id==='lisa')return '#e6e5df';
  if(id==='marathon')return ['sticks','ps'].includes(group)?black:control?'#d8dce0':white;
@@ -20,6 +20,20 @@ function label(ctx,t,x,y,size,color,font='Arial'){ctx.fillStyle=color;ctx.font=`
 function star(ctx,x,y,r,color){fill(ctx,Array.from({length:10},(_,i)=>{const a=i*Math.PI/5-Math.PI/2;return[x+Math.cos(a)*r*(i%2?.4:1),y+Math.sin(a)*r*(i%2?.4:1)];}),color);}
 function skull(ctx,x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.ellipse(x,y,r,r*.8,0,0,Math.PI*2);ctx.fill();ctx.fillRect(x-r*.5,y,r,r*.85);for(const side of [-1,1]){ctx.fillStyle=black;ctx.beginPath();ctx.ellipse(x+side*r*.38,y,r*.2,r*.22,0,0,Math.PI*2);ctx.fill();}ctx.fillStyle=black;ctx.fillRect(x-r*.05,y+r*.35,r*.1,r*.35);}
 
+export function drawTracedArtwork(ctx,id,group,w,h) {
+ const key=group==='rear'?id+'-rear':['spiderman','lastofus','helldivers'].includes(id)&&group==='touchpad'?id+'-pad':id;
+ if(!traces[key]||!['shell','touchpad','rear'].includes(group))return false;
+ const project=([x,y])=>group==='touchpad'?[(x+.405)/.81*w,(.642-y)/.437*h]:[(x+1)/2*w,(.65-y)/1.3*h];
+ if(group==='rear'&&['marathon','yotei-black','007','lisa'].includes(id))for(const side of [-1,1]) {
+  const [x,y]=project([side*.82,-.6]);ctx.fillStyle=id==='007'?'#24262c':'#92999d';ctx.beginPath();ctx.ellipse(x,y,w*.057,h*.075,side*.65,0,Math.PI*2);ctx.fill();
+ }
+ for(const layer of traces[key]){
+  ctx.beginPath();for(const points of layer.paths){points.map(project).forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();}
+  ctx.fillStyle=layer.color;ctx.fill('evenodd');
+ }
+ return true;
+}
+
 export function drawCatalogArtwork(ctx,id,group,w,h) {
  const touch=group==='touchpad',shell=group==='shell';
  if(!touch&&!shell&&group!=='rear'&&group!=='trim')return;
@@ -27,16 +41,9 @@ export function drawCatalogArtwork(ctx,id,group,w,h) {
  if(id.startsWith('gta')&&group==='trim') {
   const gradient=ctx.createLinearGradient(0,h*.3,0,h*.75);gradient.addColorStop(0,'#007cb9');gradient.addColorStop(.55,'#364c99');gradient.addColorStop(1,'#593261');ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h);return;
  }
- if(traces[id]&&(touch||shell)) {
-  for(const layer of traces[id]){
-   ctx.beginPath();for(const points of layer.paths){points.map(project).forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();}
-   ctx.fillStyle=layer.color;ctx.fill('evenodd');
-  }
-  return;
- }
+ if(drawTracedArtwork(ctx,id,group,w,h))return;
  if(group==='rear') {
   if(id==='concord')label(ctx,'CONCORD',w*.5,h*.33,w*.045,'#d18256');
-  if(id==='deathstranding')label(ctx,'KOJIMA PRODUCTIONS',w*.5,h*.33,w*.012,'#bba78c');
   if(id.startsWith('yotei')){ctx.strokeStyle='#925249';ctx.lineWidth=w*.002;ctx.strokeRect(w*.46,h*.28,w*.08,h*.11);label(ctx,'△ ○',w*.5,h*.315,w*.015,'#925249');label(ctx,'× □',w*.5,h*.355,w*.015,'#925249');}
   return;
  }

@@ -6,7 +6,7 @@ DualSense Studio is an independent, unofficial technical prototype for testing 3
 
 The project author claims no ownership of Sony/PlayStation controller industrial designs, product names, logos, trademarks, limited-edition artwork, official promotional photographs, or the characters and branding depicted in them. Those materials remain the property of their respective rights holders, including Sony Interactive Entertainment and the relevant game publishers and licensors.
 
-Reference-based artwork recreations in this prototype are presented solely as visual experiments and approximations. They are not official production textures, authenticated scans, replacement-part specifications, or licensed merchandise. A testing-purpose notice does not grant permission to reuse third-party artwork or trademarks.
+Reference-based artwork recreations in this prototype are presented solely as visual experiments and approximations. They are not official production textures, authenticated scans, replacement-part specifications, or licensed merchandise. Reconstructed decals and estimated material maps depict third-party designs for testing only; the project author makes no ownership claim over the underlying artwork. A testing-purpose notice does not grant permission to reuse third-party artwork or trademarks.
 
 ## Supplied 3D model
 

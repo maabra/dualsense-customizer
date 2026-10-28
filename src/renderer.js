@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
 import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog';
 import { transferProgress } from './loading';
+import {createSurfaceCanvas} from './surface-artwork';
 import { createEditionCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 export function createStudio(container, report) {
@@ -97,6 +98,7 @@ export function createStudio(container, report) {
       const canvas=createEditionCanvas(entry.id,part,group,quality);
       if(!canvas){artworkCache.set(key,null);return null;}
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+      const surface=new THREE.CanvasTexture(createSurfaceCanvas(canvas,entry.id,group));surface.colorSpace=THREE.NoColorSpace;surface.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.userData.surface=surface;
       texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());artworkCache.set(key,texture);
     }
     return artworkCache.get(key);
@@ -146,8 +148,11 @@ export function createStudio(container, report) {
         material.userData.tint = {value:new THREE.Color('#ffffff')};
         material.userData.blend = {value:0};
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
-        material.userData.paintFinish={value:0};
+        material.userData.surface={value:emptyArtwork};material.userData.surfaceEnabled={value:0};
         material.userData.printOverride={value:new THREE.Vector2(-1,-1)};
+        // Facing direction changes generated shader source. Three's default key
+        // only sees the callback text, so closures need distinct program keys.
+        material.customProgramCacheKey=()=>part==='light'?'studio-led-v2':group==='rear'?'studio-rear-surface-v2':'studio-front-surface-v2';
         // Clear button caps need their original alpha to reveal the symbols below.
         material.transparent = ['buttons','dpad','details'].includes(group);
         material.depthWrite = !['buttons','dpad'].includes(group);
@@ -185,33 +190,35 @@ export function createStudio(container, report) {
             float detail = 0.72 + 0.28 * dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
             diffuseColor.rgb = mix(diffuseColor.rgb, studioTint * detail, studioBlend);
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
-            float artMask=studioArtworkEnabled*editionArt.a*smoothstep(0.25,0.75,vEditionFacing);
+            float artMask=studioArtworkEnabled*editionArt.a*smoothstep(0.03,0.35,vEditionFacing);
             diffuseColor.rgb=mix(diffuseColor.rgb,editionArt.rgb*(0.9+detail*0.1),artMask);
           `);
-          // Printed claw paint catches a different highlight from its matte substrate.
-          // Apply only when the edition finish is selected; manual finish overrides win.
-          shader.uniforms.studioPaintFinish=material.userData.paintFinish;
+          // Explicit data maps keep metallic ink and clearcoat separate from albedo.
+          shader.uniforms.studioSurface=material.userData.surface;
+          shader.uniforms.studioSurfaceEnabled=material.userData.surfaceEnabled;
           shader.uniforms.studioPrintOverride=material.userData.printOverride;
-          shader.fragmentShader='uniform float studioPaintFinish;\nuniform vec2 studioPrintOverride;\n'+shader.fragmentShader;
+          shader.fragmentShader='uniform sampler2D studioSurface;\nuniform float studioSurfaceEnabled;\nuniform vec2 studioPrintOverride;\n'+shader.fragmentShader;
           shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-            vec3 paint=texture2D(studioArtwork,vEditionUV).rgb;
-            float paintMask=studioArtworkEnabled*smoothstep(0.25,0.75,vEditionFacing)*step(0.5,studioPaintFinish);
-            float brightest=max(paint.r,max(paint.g,paint.b));
-            float saturation=brightest-min(paint.r,min(paint.g,paint.b));
-            float silverInk=(1.0-smoothstep(0.02,0.07,saturation))*smoothstep(0.035,0.075,brightest);
-            float pigment=smoothstep(0.035,0.12,brightest);
-            float printMetal=0.78*silverInk;
-            float printRough=mix(mix(0.67,0.36,pigment),0.23,silverInk);
-            if(studioPaintFinish>1.5&&studioPaintFinish<2.5){
-              pigment=smoothstep(0.045,0.12,brightest)*step(paint.b*1.25,paint.r);
-              printMetal=0.72;printRough=0.28;paintMask*=pigment;
+            vec3 editionSurface=texture2D(studioSurface,vEditionUV).rgb;
+            float printedRegion=step(0.45,editionSurface.b);
+            float finishFacing=studioArtworkEnabled*smoothstep(0.03,0.35,vEditionFacing);
+            float finishMask=finishFacing*max(studioSurfaceEnabled,printedRegion);
+            float printRough=editionSurface.r;
+            float printMetal=editionSurface.g;
+            if(studioPrintOverride.x>=0.0){
+              printRough=mix(printRough,studioPrintOverride.x,printedRegion);
+              printMetal=mix(printMetal,studioPrintOverride.y,printedRegion);
             }
-            if(studioPaintFinish>2.5){printMetal=0.0;printRough=0.19;paintMask*=smoothstep(0.022,0.05,brightest);}
-            if(studioPrintOverride.x>=0.0){printRough=studioPrintOverride.x;printMetal=studioPrintOverride.y;if(studioPaintFinish<1.5)paintMask*=pigment;}
-            roughnessFactor=mix(roughnessFactor,printRough,paintMask);
+            roughnessFactor=mix(roughnessFactor,printRough,finishMask);
           `);
           shader.fragmentShader=shader.fragmentShader.replace('#include <metalnessmap_fragment>',`#include <metalnessmap_fragment>
-            metalnessFactor=mix(metalnessFactor,printMetal,paintMask);
+            metalnessFactor=mix(metalnessFactor,printMetal,finishMask);
+          `);
+          shader.fragmentShader=shader.fragmentShader.replace('#include <lights_physical_fragment>',`#include <lights_physical_fragment>
+            #ifdef USE_CLEARCOAT
+              float editionCoat=clamp((editionSurface.b-printedRegion*0.5)/0.45,0.0,1.0);
+              material.clearcoat=mix(material.clearcoat,editionCoat,finishMask);
+            #endif
           `);
         };
       });
@@ -243,6 +250,8 @@ export function createStudio(container, report) {
       const upload = uploads.get(part);
       const group=parentPart(part),artwork=upload?null:artworkFor(entry,part,group);
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
+      m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
+      m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
       m.userData.blend.value = upload ? 0 : native ? 0 : 1;
       m.userData.tint.value.set(selection.id === 'custom' ? selection.hex || '#69aaff' : editionPartColor(entry,part,group)||paletteColor(entry,part));
@@ -252,14 +261,12 @@ export function createStudio(container, report) {
       m.metalness = original ? m.userData.originalMetalness : finish === 'metallic' ? .85 : 0;
       const surface=selection.finish==='original'&&!upload?editionSurface(entry?.id,group):null;
       m.clearcoat=surface?.clearcoat||(finish==='gloss'?.55:0);
+      if(artwork)m.clearcoat=Math.max(m.clearcoat,.001);
       m.clearcoatRoughness=.25;
       if(surface){m.roughness=surface.roughness;m.metalness=surface.metalness;}
-      const printed=['shell','touchpad'].includes(group)&&!upload;
-      const printStyle=entry?.id.startsWith('wolverine')?1:['ff16','hogwarts','yotei-gold'].includes(entry?.id)?2:entry?.id==='lastofus'?3:0;
-      m.userData.paintFinish.value=printed?printStyle:0;
       const printFinish={matte:[.8,0],satin:[.4,0],metallic:[.23,.8],gloss:[.14,0]}[selection.printFinish];
       m.userData.printOverride.value.set(...(printFinish||[-1,-1]));
-      m.iridescence=entry?.id==='lisa'&&selection.finish==='original'&&['shell','trim'].includes(group)?.35:0;
+      m.iridescence=entry?.id==='lisa'&&selection.finish==='original'&&['shell','trim','rear'].includes(group)?.35:0;
       m.iridescenceIOR=1.3;m.iridescenceThicknessRange=[140,360];
       m.roughnessMap = native && selection.finish === 'original' ? m.userData.originalRoughnessMap : null;
       m.needsUpdate = true;
@@ -267,7 +274,7 @@ export function createStudio(container, report) {
     // Keep only textures referenced by the current mix: 3K canvases are expensive
     // on mobile, and switching editions must not retain every previous set.
     const used=new Set();model?.traverse(obj=>{if(obj.isMesh)used.add(obj.material.userData.artwork?.value);});
-    for(const [key,texture] of artworkCache)if(!used.has(texture)){texture?.dispose();artworkCache.delete(key);}
+    for(const [key,texture] of artworkCache)if(!used.has(texture)){texture?.userData.surface?.dispose();texture?.dispose();artworkCache.delete(key);}
   }
   let transition;
   function view(name, resetDistance = false) {
@@ -312,6 +319,6 @@ export function createStudio(container, report) {
     clearTexture(part) {const old=new Set(targetsFor(part).map(key=>uploads.get(key)).filter(Boolean));targetsFor(part).forEach(key=>uploads.delete(key));old.forEach(t=>{if(![...uploads.values()].includes(t))t.dispose();});if(activeState) apply(activeState,activeLight);},
     hasTexture(part) {return targetsFor(part).some(key=>uploads.has(key));},
     capture() {renderer.render(scene,camera);return renderer.domElement.toDataURL('image/png');},
-    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(texture=>texture?.dispose());emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
+    dispose() {dead=true;cancelAnimationFrame(frame);viewport.disconnect();controls.dispose();if(model)release(model);uploads.forEach(t=>t.dispose());artworkCache.forEach(texture=>{texture?.userData.surface?.dispose();texture?.dispose();});emptyArtwork.dispose();barHalos.forEach(halo=>halo.material.dispose());glowMap.dispose();environment.dispose();shadow.geometry.dispose();shadow.material.dispose();key.shadow.map?.dispose();renderer.dispose();renderer.domElement.remove();},
   };
 }

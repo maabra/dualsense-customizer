@@ -20,7 +20,7 @@ Switching between Grouped parts and Individual parts preserves each piece's sett
 
 ## Asset status
 
-The default controller uses the supplied model and its original textures. All 24 listed edition entries include reference-based artwork approximations. Wolverine and nine additional layouts use photo-derived contours; complex character illustrations and some logos remain simplified. These are not extracted official texture maps. See the asset documentation for per-edition accuracy limits. The catalog does not claim to cover every regional or promotional release.
+The default controller uses the supplied model and its original textures. All 24 listed edition entries include reference-based artwork approximations. Wolverine and fifteen other front layouts use photo-derived contours; complex character illustrations and some logos remain simplified. These are not extracted official texture maps. See the asset documentation for per-edition accuracy limits. The catalog does not claim to cover every regional or promotional release.
 
 Generated part-selector icons are displayed from a transparent 5×5 atlas. The [icon asset notes and exact generation prompt](public/icons/README.md) describe the built-in image-generation step. Controller artwork is drawn in code, not image-generated.
 
