@@ -413,5 +413,75 @@
     "controls": "Existing per-edition finish regions, part/base finish, and print finish are preserved.",
     "sourceCleanup": "Photographed hardware-outline components removed from vector art; no runtime control exclusion masks.",
     "limitations": "Fitted vector reconstruction and native-UV baking, not an authenticated factory texture set or new measured geometry."
+  },
+  "catalogAudit": {
+    "scope": "All 24 catalog front appearances; additional inspected rear/oblique views; Original-model GTA checks.",
+    "sources": [
+      {
+        "file": "hogwarts-front.jpg",
+        "url": "https://cdn.mos.cms.futurecdn.net/n29QphXuw4kCFo8SdtkHLk.jpg"
+      },
+      {
+        "file": "concord-rear.jpg",
+        "url": "https://gaming-cdn.com/images/news/articles/7480/image/708x398/concord-va-avoir-droit-a-une-dualsense-exclusive-image66a2717701031.jpg"
+      },
+      {
+        "file": "godofwar-rear.jpg",
+        "url": "https://api-rayashop.freetls.fastly.net/media/catalog/product/cache/4e49ac3a70c0b98a165f3fa6633ffee1/d/u/dualsense_05_gowr_pr_srgb_withnotice.jpg?format=webp&width=1400"
+      },
+      {
+        "file": "concord-front.jpg",
+        "url": "https://www.notebookcheck.info/fileadmin/Notebooks/News/_nc4/PlayStation-DualSense-Wireless-Controller-Concord-Limited-Edition.jpg"
+      },
+      {
+        "file": "concord-front-alt.jpg",
+        "url": "https://media.altchar.com/prod/images/gm_featured_image/0ee5c92660a4-sony-firewalk-concord.png"
+      },
+      {
+        "file": "lebron-front.jpg",
+        "url": "https://blog.de.playstation.com/tachyon/sites/13/2023/06/c4e9476a0ef0c0d9030c8fba6b4a54649ee4ebab.png"
+      },
+      {
+        "file": "yotei-gold-front.jpg",
+        "url": "https://videoigr.net/images/DualsenseGhostofYoteiGE.png"
+      },
+      {
+        "file": "yotei-gold-rear.jpg",
+        "url": "https://media.ldlc.com/r1600/ld/products/00/06/28/22/LD0006282275.jpg"
+      },
+      {
+        "file": "godofwar-logo.png",
+        "url": "https://gmedia.playstation.com/is/image/SIEPDC/god-of-war-ragnarok-logo-01-09sep21$en?wid=2400&fmt=png-alpha"
+      }
+    ],
+    "primaryGtaDescription": "https://blog.playstation.com/?p=422678",
+    "corrections": [
+      "Gray/colored-control layout; matte substrate profile reviewed.",
+      "Pad vectors, traced badges, carbon appearance and rear mark reviewed.",
+      "Claw layout; metallic gray versus dielectric yellow print; rear tips reviewed.",
+      "Shared claws and metallic trim reviewed; true transparent windows/internal geometry remain unsupported.",
+      "Larger dot-matrix eyes, curved glossy blue grips and molded circuit relief corrected.",
+      "Dot-matrix happy eyes and the same grip/relief corrections.",
+      "Reference-derived symbiote contours, emblem and white controls reviewed.",
+      "Blue rear restored, rear logo fitted from official high-resolution logo, pale grip tips; front bear/wolf reviewed.",
+      "Gold/blue vector artwork and matte-versus-metallic material separation reviewed.",
+      "Generic castle and repeated waves replaced with traced castle/magic artwork.",
+      "Invented grip words and generic fonts replaced with the actual reference lettering and graffiti contours.",
+      "Incorrect generic bands replaced with the actual red/teal ship artwork; rear emblem/wordmark corrected.",
+      "Reference-derived Peely/Fishstick graphics and blue controls reviewed.",
+      "Skull, worn yellow markings and matte armor/paint material separation reviewed.",
+      "Reference emblems/trophy artwork and glossy print on matte substrate reviewed.",
+      "Orange Drawbridge artwork and matte substrate reviewed.",
+      "Incorrect gold substrate/toy silhouette replaced with pale material, traced brushwork/Atsu, gold glyphs and referenced rear branding.",
+      "Sumi-e artwork, pale substrate, dark printed finish and rear branding reviewed.",
+      "Industrial front markings, lime rear wordmark and substrate finish reviewed.",
+      "Gold front/rear material, black controls, radial front and rear wordmark reviewed.",
+      "Deep green-black substrate, palm/VI relief, iridescence, blue/violet trim, pink markings, purple tips and rear branding corrected.",
+      "White substrate/controls using the shared GTA relief and separate color profile; same coating/marking/tip corrections.",
+      "Pearl profile, reference eyes/signature and rear details reviewed.",
+      "Reference pattern and matte material profile reviewed."
+    ],
+    "pipeline": "Separate vector relief/color/finish maps share native UV charts. Relief perturbs original normals rather than replacing them.",
+    "limits": "Reference-derived estimates; not a factory texture set or measurement of variant-specific geometry."
   }
 }

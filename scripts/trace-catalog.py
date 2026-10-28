@@ -15,6 +15,8 @@ jobs={
  'camo':('camo-front.jpg',800,445,480,'camo'),
  'gta-black':('../detail/gallery-16.jpg',900,500,540,'gta-black'),
  'gta-white':('../detail/gallery-21.jpg',900,500,540,'gta-white'),
+ 'gta-relief':('../detail/gallery-21.jpg',900,500,540,'gta-relief'),
+ 'gta-rear-logo':('../detail/gallery-25.jpg',900,500,540,'gta-rear-logo'),
  'gt':('../detail/gallery-1.jpg',900,500,540,'gt'),
  'gt-rear':('../detail/gallery-5.jpg',900,500,540,'gt-rear'),
  'godofwar':('../pass2/godofwar-0.jpg',810,532,487,'godofwar'),
@@ -29,27 +31,53 @@ jobs={
  'lastofus-pad':('lastofus-0.jpg',1213,483,421,'lastofus-pad'),
  'helldivers':('helldivers-15.jpg',1282,443,420,'helldivers'),
  'helldivers-pad':('helldivers-15.jpg',1282,443,420,'helldivers-pad'),
+ 'hogwarts':('../audit/hogwarts-front.jpg',951,564,692,'hogwarts'),
+ 'concord':('../audit/concord-front-alt.jpg',837,298,321,'concord'),
+ 'concord-pad':('../audit/concord-front-alt.jpg',837,298,321,'concord-pad'),
+ 'concord-rear':('../audit/concord-rear.jpg',354,190,300,'concord-rear'),
+ 'godofwar-rear':('../audit/godofwar-rear.jpg',350,365,230,'godofwar-rear'),
+ 'lebron':('../audit/lebron-front.jpg',290,287,264,'lebron'),
+ 'lebron-pad':('../audit/lebron-front.jpg',290,287,264,'lebron-pad'),
+ 'yotei-gold':('../audit/yotei-gold-front.jpg',500,386,488,'yotei-gold'),
+ 'yotei-gold-rear':('../audit/yotei-gold-rear.jpg',800,785,640,'yotei-gold-rear'),
 }
 result={}
 for key,(filename,cx,cy,scale,mode) in jobs.items():
- im=cv2.imread(str(folder/filename));hsv=cv2.cvtColor(im,cv2.COLOR_BGR2HSV);gray=cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
+ raw=cv2.imread(str(folder/filename),cv2.IMREAD_UNCHANGED);im=raw[:,:,:3];source_alpha=raw[:,:,3]>200 if raw.shape[2]==4 else np.ones(raw.shape[:2],dtype=bool)
+ hsv=cv2.cvtColor(im,cv2.COLOR_BGR2HSV);gray=cv2.cvtColor(im,cv2.COLOR_BGR2GRAY)
  layers=[]
- def add(mask,color):
+ def add(mask,color,maximum=None):
   contours,_=cv2.findContours(mask.astype(np.uint8)*255,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
   paths=[]
   for c in contours:
    if cv2.contourArea(c)<2:continue
+   if maximum is not None and cv2.contourArea(c)>maximum:continue
    points=cv2.approxPolyDP(c,.6,True)[:,0]
    if mode.endswith('-pad'):
-    corners={'spiderman-pad':[[670,185],[1070,185],[1045,365],[705,365]],'lastofus-pad':[[1050,263],[1383,263],[1358,408],[1090,408]],'helldivers-pad':[[1110,238],[1448,238],[1413,378],[1141,378]]}[mode]
+    corners={'spiderman-pad':[[670,185],[1070,185],[1045,365],[705,365]],'lastofus-pad':[[1050,263],[1383,263],[1358,408],[1090,408]],'helldivers-pad':[[1110,238],[1448,238],[1413,378],[1141,378]],'concord-pad':[[713,132],[960,132],[929,242],[744,242]],'lebron-pad':[[184,122],[395,121],[378,237],[203,237]]}[mode]
     homography=cv2.getPerspectiveTransform(np.float32(corners),np.float32([[-.405,.642],[.405,.642],[.33,.205],[-.33,.205]]))
     world=cv2.perspectiveTransform(points.astype(np.float32)[None],homography)[0]
    else:
-    up,down={'spiderman':(430,650),'lastofus':(341,580),'helldivers':(330,550)}.get(mode,(scale,scale))
+    up,down={'spiderman':(430,650),'lastofus':(341,580),'helldivers':(330,550),'concord':(290,430),'lebron':(253,280),'yotei-gold':(488,510)}.get(mode,(scale,scale))
     world=np.array([[(float(x)-cx)/scale,(cy-float(y))/(up if y<cy else down)] for x,y in points])
    paths.append([[round(float(x),4),round(float(y),4)] for x,y in world])
   layers.append({'color':color,'paths':paths})
- if mode=='fortnite':
+ if mode=='hogwarts':
+  add((hsv[:,:,0]>12)&(hsv[:,:,0]<45)&(hsv[:,:,1]>40)&(hsv[:,:,2]>70),'#baa05c')
+ elif mode.startswith('concord') and not mode.endswith('rear'):
+  add(((hsv[:,:,0]<16)|(hsv[:,:,0]>170))&(hsv[:,:,1]>85)&(hsv[:,:,2]>60),'#bb4239')
+  region=np.zeros(gray.shape,np.uint8);cv2.fillPoly(region,[np.int32([[565,130],[1050,130],[1130,330],[1120,560],[1020,590],[950,405],[720,405],[640,590],[540,560],[535,330]])],1)
+  add((hsv[:,:,0]>74)&(hsv[:,:,0]<105)&(hsv[:,:,1]>80)&(hsv[:,:,2]>60)&(region>0),'#58a69d')
+ elif mode.startswith('lebron'):
+  mask=(hsv[:,:,2]<95)&source_alpha
+  blobs,_=cv2.findContours(mask.astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE);region=np.zeros(gray.shape,np.uint8)
+  cv2.drawContours(region,[c for c in blobs if cv2.contourArea(c)>10000],-1,1,-1)
+  for lo,hi,color in [(18,43,'#e0cf40'),(140,179,'#d55da8'),(88,130,'#38b6d5'),(45,87,'#45af88')]:add((hsv[:,:,0]>=lo)&(hsv[:,:,0]<=hi)&(hsv[:,:,1]>75)&(hsv[:,:,2]>100)&(region>0),color)
+  add((gray>160)&(hsv[:,:,1]<60)&(region>0),'#e9ebe5')
+ elif mode=='yotei-gold':
+  add((hsv[:,:,0]>12)&(hsv[:,:,0]<43)&(hsv[:,:,1]>45)&(hsv[:,:,2]>85)&source_alpha,'#b49a52')
+  add((gray<160)&(gray>60)&(hsv[:,:,1]<55)&source_alpha,'#8e9288',maximum=2000)
+ elif mode=='fortnite':
   blue=(hsv[:,:,0]>85)&(hsv[:,:,0]<118)&(hsv[:,:,1]>60)&(hsv[:,:,2]>65)
   blue[:340]=False;blue[:,:450]=False;blue[:,1470:]=False
   blobs,_=cv2.findContours(blue.astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -81,13 +109,22 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
  elif mode.endswith('-rear'):
   region=np.zeros(gray.shape,np.uint8)
   cv2.rectangle(region,(int(cx-scale*.36),int(cy-scale*.58)),(int(cx+scale*.36),int(cy-scale*.29)),1,-1)
-  if mode=='marathon-rear':mask=(hsv[:,:,0]>25)&(hsv[:,:,0]<48)&(hsv[:,:,1]>90)&(hsv[:,:,2]>110);ink='#c7ed36'
+  if mode=='concord-rear':
+   add((((hsv[:,:,0]<16)|(hsv[:,:,0]>168))&(hsv[:,:,1]>90)&(gray>50)&(region>0)),'#bb4239')
+   mask=(gray>145)&(hsv[:,:,1]<60);ink='#e3e7e6'
+  elif mode=='godofwar-rear':
+   region[:]=0;cv2.rectangle(region,(260,260),(442,323),1,-1)
+   mask=(gray>80)&(hsv[:,:,1]<155);ink='#a9b0bd'
+  elif mode=='marathon-rear':mask=(hsv[:,:,0]>25)&(hsv[:,:,0]<48)&(hsv[:,:,1]>90)&(hsv[:,:,2]>110);ink='#c7ed36'
+  elif mode=='yotei-gold-rear':
+   add((hsv[:,:,0]>12)&(hsv[:,:,0]<43)&(hsv[:,:,1]>45)&(hsv[:,:,2]>85)&(region>0),'#b49a52')
+   mask=(gray<175)&(hsv[:,:,1]<60);ink='#777b76'
   elif mode=='yotei-rear':mask=(gray<115);ink='#55544f'
   elif mode=='007-rear':mask=(hsv[:,:,1]<90)&(gray>150);ink='#e0d5b5'
   else:
    delta=gray.astype(float)-cv2.GaussianBlur(gray,(0,0),6).astype(float);mask=(delta>5)&(gray>145);ink='#c3c4c8'
   add(mask&(region>0),ink)
-  if mode=='yotei-rear':add((hsv[:,:,0]<12)&(hsv[:,:,1]>70)&(hsv[:,:,2]>55),'#96504a')
+  if mode in ['yotei-rear','yotei-gold-rear']:add((hsv[:,:,0]<12)&(hsv[:,:,1]>70)&(hsv[:,:,2]>55),'#96504a')
  elif mode.startswith('spiderman'):
   region=np.zeros(gray.shape,np.uint8)
   cv2.fillPoly(region,[np.int32([[955,180],[1200,180],[1290,230],[1355,430],[1397,660],[1395,830],[1337,878],[1265,870],[1200,650],[1140,520],[1080,380],[1035,365]])],1)
@@ -102,6 +139,24 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
   add(gray<115,'#25292b')
   add((hsv[:,:,0]<12)&(hsv[:,:,1]>100)&(hsv[:,:,2]>90),'#b92f43')
   add((hsv[:,:,0]>95)&(hsv[:,:,0]<125)&(hsv[:,:,1]>95)&(hsv[:,:,2]>80),'#3678b7')
+ elif mode=='gta-rear-logo':
+  delta=cv2.GaussianBlur(gray,(0,0),12).astype(float)-gray.astype(float)
+  region=np.zeros(gray.shape,np.uint8);cv2.rectangle(region,(810,200),(995,365),1,-1)
+  add((delta>1.8)&(gray>100)&(hsv[:,:,1]<40)&(region>0),'#555555')
+ elif mode=='gta-relief':
+  delta=cv2.GaussianBlur(gray,(0,0),14).astype(float)-gray.astype(float)
+  region=np.zeros(gray.shape,np.uint8)
+  cv2.rectangle(region,(790,205),(1015,365),1,-1)
+  for x0,x1 in [(365,650),(1150,1435)]:cv2.rectangle(region,(x0,200),(x1,805),1,-1)
+  add((delta>2.2)&(hsv[:,:,1]<40)&(gray>100)&(region>0),'#555555')
+  centers=[[-.623,.39],[-.723,.276],[-.524,.276],[-.623,.167],[.623,.423],[.77,.276],[.476,.276],[.623,.129],[-.467,.55],[.467,.55]]
+  for layer in layers:
+   clean=[]
+   for path in layer['paths']:
+    p=np.asarray(path);lo=p.min(0);hi=p.max(0);span=hi-lo;mid=(lo+hi)/2
+    hardware=(span<.25).all() and (span>.065).all() and any((abs(mid-np.asarray(c))<.035).all() for c in centers)
+    if not hardware:clean.append(path)
+   layer['paths']=clean
  elif mode.startswith('gta'):
   delta=cv2.GaussianBlur(gray,(0,0),7).astype(float)-gray.astype(float)
   if mode=='gta-black':add((delta < -6)&(gray>45),'#4b5558')
@@ -127,5 +182,17 @@ for key,(filename,cx,cy,scale,mode) in jobs.items():
  # Remove silhouettes outside the controller's modeled front extent; geometry
  # clips the remaining control holes naturally. Even-odd fill retains counters.
  result[key]=layers
+# Small rear product photographs lose the thin subtitle. Use the official
+# high-resolution logo's silhouette, fitted to the photographed rear placement.
+logo_path=root/'assets/references/audit/godofwar-logo.png'
+if logo_path.exists():
+ logo=cv2.imread(str(logo_path),cv2.IMREAD_UNCHANGED);mask=np.uint8(logo[:,:,3]>180)*255
+ ys,xs=np.where(mask>0);x0,x1=xs.min(),xs.max();y0,y1=ys.min(),ys.max();scale=.5/(x1-x0)
+ paths=[]
+ for contour in cv2.findContours(mask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)[0]:
+  if cv2.contourArea(contour)<4:continue
+  points=cv2.approxPolyDP(contour,.4,True)[:,0]
+  paths.append([[round((float(x)-(x0+x1)/2)*scale,5),round(.39-(float(y)-(y0+y1)/2)*scale,5)] for x,y in points])
+ result['godofwar-rear']=[{'color':'#a9b0bd','paths':paths}]
 (root/'src/catalog-traces.json').write_text(json.dumps(result,separators=(',',':')),encoding='utf-8')
 print('Extracted',len(result),'reference layouts')

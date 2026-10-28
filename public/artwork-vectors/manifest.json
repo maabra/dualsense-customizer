@@ -61,6 +61,7 @@
     },
     "astro": {
       "shell": "astro/shell.svg",
+      "relief-shell": "astro/relief-shell.svg",
       "rear": "astro/rear.svg",
       "trim": "astro/trim.svg",
       "touchpad": "astro/touchpad.svg",
@@ -75,6 +76,7 @@
     },
     "astro-joyful": {
       "shell": "astro-joyful/shell.svg",
+      "relief-shell": "astro-joyful/relief-shell.svg",
       "rear": "astro-joyful/rear.svg",
       "trim": "astro-joyful/trim.svg",
       "touchpad": "astro-joyful/touchpad.svg",
@@ -285,9 +287,12 @@
     },
     "gta-black": {
       "shell": "gta-black/shell.svg",
+      "relief-shell": "gta-black/relief-shell.svg",
       "rear": "gta-black/rear.svg",
+      "relief-rear": "gta-black/relief-rear.svg",
       "trim": "gta-black/trim.svg",
       "touchpad": "gta-black/touchpad.svg",
+      "relief-touchpad": "gta-black/relief-touchpad.svg",
       "button-triangle": "gta-black/button-triangle.svg",
       "button-circle": "gta-black/button-circle.svg",
       "button-cross": "gta-black/button-cross.svg",
@@ -299,9 +304,12 @@
     },
     "gta-white": {
       "shell": "gta-white/shell.svg",
+      "relief-shell": "gta-white/relief-shell.svg",
       "rear": "gta-white/rear.svg",
+      "relief-rear": "gta-white/relief-rear.svg",
       "trim": "gta-white/trim.svg",
       "touchpad": "gta-white/touchpad.svg",
+      "relief-touchpad": "gta-white/relief-touchpad.svg",
       "button-triangle": "gta-white/button-triangle.svg",
       "button-circle": "gta-white/button-circle.svg",
       "button-cross": "gta-white/button-cross.svg",

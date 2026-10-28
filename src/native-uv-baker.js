@@ -8,16 +8,16 @@ export function createNativeUvBaker(renderer,root) {
  const charts=new Map(),camera=new THREE.Camera();
  const scene=new THREE.Scene();
  const material=new THREE.ShaderMaterial({
-  uniforms:{source:{value:null},bounds:{value:new THREE.Vector4()},rear:{value:0}},
+  uniforms:{source:{value:null},bounds:{value:new THREE.Vector4()},rear:{value:0},followCurves:{value:0}},
   vertexShader:`attribute vec2 studioArtworkUv;
     uniform vec4 bounds;uniform float rear;
     varying vec2 plateUv;varying float facing;
     void main(){plateUv=studioArtworkUv;facing=mix(normal.z,-normal.z,rear);
       vec2 target=(uv-bounds.xy)/bounds.zw;
       gl_Position=vec4(target*2.0-1.0,0.0,1.0);}`,
-  fragmentShader:`uniform sampler2D source;varying vec2 plateUv;varying float facing;
+  fragmentShader:`uniform sampler2D source;uniform float followCurves;varying vec2 plateUv;varying float facing;
     void main(){vec4 ink=texture2D(source,plateUv);
-      float coverage=ink.a*smoothstep(0.45,0.82,facing);
+      float coverage=ink.a*smoothstep(mix(0.45,0.03,followCurves),mix(0.82,0.2,followCurves),facing);
       if(coverage<0.001)discard;
       gl_FragColor=vec4(ink.rgb*coverage,coverage);}`,
   side:THREE.DoubleSide,depthTest:false,depthWrite:false,toneMapped:false,
@@ -33,7 +33,7 @@ export function createNativeUvBaker(renderer,root) {
    const uv=obj.geometry.attributes.uv,normals=obj.geometry.attributes.normal,index=obj.geometry.index;
    for(let i=0;i<(index?.count||uv.count);i++){
     const id=index?index.getX(i):i,u=uv.getX(id),v=uv.getY(id);
-    if((group==='rear'?-normals.getZ(id):normals.getZ(id))<.4)continue;
+    if((group==='rear'?-normals.getZ(id):normals.getZ(id))<.02)continue;
     bounds.x=Math.min(bounds.x,u);bounds.y=Math.min(bounds.y,v);bounds.z=Math.max(bounds.z,u);bounds.w=Math.max(bounds.w,v);
    }
    meshes.push(new THREE.Mesh(obj.geometry,material));
@@ -49,6 +49,7 @@ export function createNativeUvBaker(renderer,root) {
   target.texture.colorSpace=THREE.NoColorSpace;
   target.texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
   material.uniforms.source.value=source;material.uniforms.bounds.value.copy(chart.bounds);material.uniforms.rear.value=group==='rear'?1:0;
+  material.uniforms.followCurves.value=source.userData.followCurves?1:0;
   scene.clear();chart.meshes.forEach(mesh=>scene.add(mesh));
   const previous=renderer.getRenderTarget(),clear=new THREE.Color();renderer.getClearColor(clear);const alpha=renderer.getClearAlpha(),auto=renderer.autoClear;
   try{renderer.autoClear=true;renderer.setRenderTarget(target);renderer.setClearColor(0,0);renderer.clear();renderer.render(scene,camera);}
@@ -57,15 +58,18 @@ export function createNativeUvBaker(renderer,root) {
   return target.texture;
  }
  return {
-  bake(color,surface,part,group){
+  bake(color,surface,part,group,relief=null){
    const chart=chartFor(part,group);if(!chart)return null;
-   const texture=bake(color,chart,group);texture.userData.surface=bake(surface,chart,group);return texture;
+   const texture=bake(color,chart,group);texture.userData.surface=bake(surface,chart,group);
+   if(relief)texture.userData.relief=bake(relief,chart,group);return texture;
   },
   dispose(){charts.clear();scene.clear();material.dispose();},
  };
 }
 
 export function disposeBakedArtwork(texture){
+ const relief=texture?.userData.relief;
+ if(relief?.userData.bakeTarget)relief.userData.bakeTarget.dispose();else relief?.dispose();
  const finish=texture?.userData.surface;
  if(finish?.userData.bakeTarget)finish.userData.bakeTarget.dispose();else finish?.dispose();
  if(texture?.userData.bakeTarget)texture.userData.bakeTarget.dispose();else texture?.dispose();

@@ -83,6 +83,10 @@ The original-model conversion requires Python's Pillow package. Its image proces
 
 Older shared builds using grouped selections are migrated to the individual-part format when opened.
 
+## Catalog review
+
+The [catalog audit](public/CATALOG-AUDIT.md) records visual corrections across the 24 listed editions. GTA variants include separate palm/VI relief and iridescent coatings; edition-specific material regions remain configurable.
+
 ## Vector artwork and shared mapping
 
 All 24 listed editions include [SVG artwork masters](public/artwork-vectors/manifest.json). Artwork and finish maps are baked into reusable charts from the supplied model?s original UV layout. Desktop Original/High artwork uses 4K maps; mobile sizes adapt to limit memory. Each edition retains its distinct material regions and independent artwork finish. SVG artwork remains a reference-based approximation.

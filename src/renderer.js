@@ -6,6 +6,7 @@ import { byId, paletteColor, defaultId, targetsFor, parentPart } from './catalog
 import { transferProgress } from './loading';
 import {createSurfaceCanvas} from './surface-artwork';
 import {createNativeUvBaker,disposeBakedArtwork} from './native-uv-baker';
+import {createEditionReliefCanvas} from './catalog-artwork';
 import { createEditionCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 export function createStudio(container, report) {
@@ -101,9 +102,14 @@ export function createStudio(container, report) {
       if(!canvas){artworkCache.set(key,null);return null;}
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       const surface=new THREE.CanvasTexture(createSurfaceCanvas(canvas,entry.id,group));surface.colorSpace=THREE.NoColorSpace;surface.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.userData.surface=surface;
+      const reliefCanvas=createEditionReliefCanvas(canvas,entry.id,group);
+      const relief=reliefCanvas?new THREE.CanvasTexture(reliefCanvas):null;
+      if(relief)relief.colorSpace=THREE.NoColorSpace;
+      texture.userData.followCurves=group==='shell'||entry.id.startsWith('gta');surface.userData.followCurves=texture.userData.followCurves;
+      if(relief)relief.userData.followCurves=true;
       texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
-      const baked=uvBaker?.bake(texture,surface,part,group);
-      if(baked){texture.dispose();surface.dispose();artworkCache.set(key,baked);}else artworkCache.set(key,texture);
+      const baked=uvBaker?.bake(texture,surface,part,group,relief);
+      if(baked){texture.dispose();surface.dispose();relief?.dispose();artworkCache.set(key,baked);}else {texture.userData.relief=relief;artworkCache.set(key,texture);}
     }
     return artworkCache.get(key);
   }
@@ -154,6 +160,7 @@ export function createStudio(container, report) {
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
         material.userData.surface={value:emptyArtwork};material.userData.surfaceEnabled={value:0};
         material.userData.uvBounds={value:new THREE.Vector4(0,0,1,1)};
+        material.userData.relief={value:emptyArtwork};material.userData.reliefScale={value:0};
         material.userData.printOverride={value:new THREE.Vector2(-1,-1)};
         // Facing direction changes generated shader source. Three's default key
         // only sees the callback text, so closures need distinct program keys.
@@ -228,6 +235,19 @@ export function createStudio(container, report) {
               material.clearcoat=mix(material.clearcoat,editionCoat,finishMask);
             #endif
           `);
+          shader.uniforms.studioRelief=material.userData.relief;shader.uniforms.studioReliefScale=material.userData.reliefScale;
+          shader.fragmentShader=`uniform sampler2D studioRelief;uniform float studioReliefScale;
+            float studioHeight(vec2 uv){vec4 value=texture2D(studioRelief,uv);return value.a>0.5?value.r/value.a:0.5;}
+          `+shader.fragmentShader;
+          shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+            if(studioReliefScale>0.0){
+              vec2 uvDx=dFdx(vEditionUV),uvDy=dFdy(vEditionUV);float height=studioHeight(vEditionUV);
+              vec2 dh=vec2(studioHeight(vEditionUV+uvDx)-height,studioHeight(vEditionUV+uvDy)-height)*studioReliefScale;
+              vec3 dx=normalize(dFdx(-vViewPosition)),dy=normalize(dFdy(-vViewPosition));
+              vec3 rx=cross(dy,normal),ry=cross(normal,dx);float determinant=dot(dx,rx)*faceDirection;
+              normal=normalize(abs(determinant)*normal-sign(determinant)*(dh.x*rx+dh.y*ry));
+            }
+          `);
         };
       });
       if(model) {pivot.remove(model); release(model);}
@@ -260,6 +280,8 @@ export function createStudio(container, report) {
       const group=parentPart(part),artwork=upload?null:artworkFor(entry,part,group);
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
+      m.userData.relief.value=artwork?.userData.relief||emptyArtwork;
+      m.userData.reliefScale.value=artwork?.userData.relief?(group==='touchpad'?.005:.009):0;
       m.userData.uvBounds.value.fromArray(artwork?.userData.uvBounds||[0,0,1,1]);
       m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
@@ -276,7 +298,8 @@ export function createStudio(container, report) {
       if(surface){m.roughness=surface.roughness;m.metalness=surface.metalness;}
       const printFinish={matte:[.8,0],satin:[.4,0],metallic:[.23,.8],gloss:[.14,0]}[selection.printFinish];
       m.userData.printOverride.value.set(...(printFinish||[-1,-1]));
-      m.iridescence=entry?.id==='lisa'&&selection.finish==='original'&&['shell','trim','rear'].includes(group)?.35:0;
+      const coated=selection.finish==='original'&&['shell','trim','rear','touchpad'].includes(group);
+      m.iridescence=coated?(entry?.id.startsWith('gta')?(group==='trim'?.75:.32):entry?.id==='lisa'?.35:0):0;
       m.iridescenceIOR=1.3;m.iridescenceThicknessRange=[140,360];
       m.roughnessMap = native && selection.finish === 'original' ? m.userData.originalRoughnessMap : null;
       m.needsUpdate = true;

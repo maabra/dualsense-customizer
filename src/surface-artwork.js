@@ -27,12 +27,15 @@ export function createSurfaceCanvas(artwork,id,group) {
     if(r>g*1.5&&r>.3){rough=.35;coat=.25;ink=1;}
     else if(lo>.55){rough=.42;coat=.12;ink=1;}
    }else if(id==='godofwar'&&group==='touchpad'&&b>r*1.25){rough=.43;coat=.08;ink=1;}
+   else if(id.startsWith('astro')&&b>r*1.3&&b>g*1.1&&b>.4){rough=.18;coat=.7;ink=1;}
+   else if(id==='helldivers'&&r>.5&&g>.4&&b<.35){rough=.45;coat=.05;ink=1;}
    else if(id==='marathon'&&g>.6&&r>.35&&b<.4){rough=.3;coat=.2;ink=1;}
    else if(id==='deathstranding'&&r>.6&&g>.3&&b<.45){rough=.4;coat=.1;ink=1;}
    else if(id==='gt'&&hi<.3){rough=.37;coat=.2;ink=1;}
    else if(id==='lisa'&&hi<.5){rough=.6;coat=.04;ink=1;}
    else if(id==='yotei-black'&&hi<.5){rough=.78;coat=0;ink=1;}
    else if(id==='concord'&&chroma>.15){rough=.46;coat=.08;ink=1;}
+   else if(id==='lebron'&&(hi>.45||chroma>.2)){rough=.45;coat=.1;ink=1;}
   }
   pixels[i]=Math.round(rough*255);pixels[i+1]=Math.round(metal*255);pixels[i+2]=Math.round((coat*.45+ink*.5)*255);pixels[i+3]=255;
  }
