@@ -1,6 +1,6 @@
 <template>
 
- <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><span class="header-caption">CONTROLLER DESIGN STUDIO</span><div class="header-actions"><button id="randomize-header" class="outline" aria-label="Randomize appearance" title="Randomize appearance" @click="randomize">⤨ <span>Randomize</span></button><button id="share" @click="share" class="outline">↗ <span>Share design</span></button></div></header>
+ <header><a class="brand" href="./" aria-label="DualSense Studio home"><StudioLogo /> DualSense<span class="brand-light">Studio</span></a><div class="header-actions"><button id="randomize-header" class="outline" aria-label="Randomize appearance" title="Randomize appearance" @click="randomize">⤨ <span>Randomize</span></button><button id="share" @click="share" class="outline">↗ <span>Share design</span></button></div></header>
  <dialog ref="modelDialog" class="model-dialog" aria-labelledby="model-title" @cancel="!studioReady && $event.preventDefault()">
   <form @submit.prevent="startModel">
    <StudioLogo /><h2 id="model-title">Select your controller model</h2><p class="model-intro">Choose the model that suits your device. Your design works with all three.</p>

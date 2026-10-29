@@ -312,12 +312,15 @@ function createStudio(container, report) {
       // differing UV charts in the three supplied model variants.
       const buttonLayers=new Map();
       next.traverse(obj=>{
-        if(!obj.isMesh||parentPart(obj.material.name)!=='buttons')return;
+        if(!obj.isMesh||!['buttons','dpad'].includes(parentPart(obj.material.name)))return;
         const index=obj.geometry.index,p=obj.geometry.attributes.position;
-        let z=0;const count=index?.count||p.count;
-        for(let i=0;i<count;i++)z+=p.getZ(index?index.getX(i):i);
+        let z=0;const count=index?.count||p.count,bounds=new THREE.Box3();
+        for(let i=0;i<count;i++){
+          const vertex=index?index.getX(i):i;
+          z+=p.getZ(vertex);bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,vertex));
+        }
         const layers=buttonLayers.get(obj.material.name)||[];
-        layers.push({obj,z:z/count});buttonLayers.set(obj.material.name,layers);
+        layers.push({obj,z:z/count,bounds});buttonLayers.set(obj.material.name,layers);
       });
       const nextLabels=new Map();
       for(const [part,layers] of buttonLayers){
@@ -326,13 +329,14 @@ function createStudio(container, report) {
           obj.material.userData.clearCap=layers.length>1&&far-near>.0005&&z>(far+near)/2;
           obj.renderOrder=obj.material.userData.clearCap?20:10;
         }
+        if(parentPart(part)!=='buttons')continue;
         const insert=layers.reduce((a,b)=>a.z<b.z?a:b).obj;
-        const index=insert.geometry.index,p=insert.geometry.attributes.position,bounds=new THREE.Box3();
-        for(let i=0;i<(index?.count||p.count);i++)bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,index?index.getX(i):i));
-        const size=(bounds.max.x-bounds.min.x)*1.35;
+        const insertLayer=layers.find(layer=>layer.obj===insert),cap=layers.find(layer=>layer.obj.material.userData.clearCap);
+        const bounds=insertLayer.bounds,footprint=cap?.bounds||bounds;
+        const size=Math.min(footprint.max.x-footprint.min.x,footprint.max.y-footprint.min.y)*.95;
         const label=new THREE.Mesh(new THREE.PlaneGeometry(size,size),new THREE.MeshBasicMaterial({color:0xffffff,alphaTest:.2,depthWrite:true,toneMapped:false}));
         label.material.name='symbol:'+part;label.renderOrder=11;
-        label.position.set((bounds.min.x+bounds.max.x)/2,(bounds.min.y+bounds.max.y)/2,bounds.max.z+.0008).applyMatrix4(insert.matrix);
+        label.position.set((footprint.min.x+footprint.max.x)/2,(footprint.min.y+footprint.max.y)/2,bounds.max.z+.0008).applyMatrix4(insert.matrix);
         label.quaternion.copy(insert.quaternion);insert.parent.add(label);nextLabels.set(part,{mesh:label,key:null});
       }
       if(model) {pivot.remove(model); release(model);}
