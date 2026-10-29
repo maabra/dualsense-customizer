@@ -4,4 +4,8 @@ dist/
 *.log
 artifacts/
 /scripts/
+/scripts/*
+!/scripts/
+!/scripts/export-vector-artwork.mjs
+!/scripts/vector-canvas.mjs
 /assets/

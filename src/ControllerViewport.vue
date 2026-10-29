@@ -346,7 +346,7 @@ function createStudio(container, report) {
       report({loading:false,quality:level});
     } catch(error) {
       const missing = error.response?.status === 404 || /\b404\b/.test(error.message || '');
-      const name = {original:'Original',high:'High Definition',low:'Low Definition'}[level] || 'Controller';
+      const name = {original:'Original',low:'Low Definition'}[level] || 'Controller';
       const message = missing
         ? `${name} model file was not found (404). The site may be updating. Retry or choose another model.`
         : `${name} could not be downloaded or opened. Retry, or try Low Definition for a smaller download.`;

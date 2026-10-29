@@ -89,9 +89,8 @@ function navKey(event,key){
 }
 
 const modelOptions = [
-  {id:'original',name:'Original',description:'Original geometry with detailed 4K textures.',size:'52 MB download · source geometry and original materials'},
-  {id:'high',name:'High Definition',description:'High-definition geometry and 4K textures.',size:'50 MB download'},
-  {id:'low',name:'Low Definition',description:'Faster loading and lower memory use.',size:'7 MB download · faster on mobile'},
+  {id:'original',name:'Original',description:'Original geometry with detailed 4K textures.',size:'51.9 MB download · source geometry and original materials'},
+  {id:'low',name:'Low Definition',description:'Faster loading and lower memory use.',size:'7.2 MB download · faster on mobile'},
 ];
 const lightPresets=[{name:'Player 1',color:'#0072ff'},{name:'Player 2',color:'#ff334f'},{name:'Player 3',color:'#32d16d'},{name:'Player 4',color:'#ed69bb'},{name:'White',color:'#ffffff'}];
 const light = ref('#0072ff'), quality = ref('original'), loading = ref(false), loadingLabel = ref('Loading original model…');
