@@ -60,11 +60,44 @@ function spider(ctx,x,y,scale,color) {
   ctx.restore();
 }
 function faceSymbol(ctx,part,color,w,h) {
-  const cx=w/2,cy=h/2,r=w*.32;ctx.strokeStyle=color;ctx.lineWidth=w*.055;ctx.lineJoin='round';ctx.lineCap='round';
+  const cx=w/2,cy=h/2,r=w*.36;ctx.strokeStyle=color;ctx.lineWidth=w*.055;ctx.lineJoin='round';ctx.lineCap='round';
   if(part==='button-triangle') {line(ctx,[[cx,cy-r],[cx+r*.92,cy+r*.65],[cx-r*.92,cy+r*.65],[cx,cy-r]],color,w*.055);}
   else if(part==='button-square')ctx.strokeRect(cx-r*.72,cy-r*.72,r*1.44,r*1.44);
   else if(part==='button-circle'){ctx.beginPath();ctx.arc(cx,cy,r*.85,0,Math.PI*2);ctx.stroke();}
   else if(part==='button-cross'){line(ctx,[[cx-r*.72,cy-r*.72],[cx+r*.72,cy+r*.72]],color,w*.055);line(ctx,[[cx+r*.72,cy-r*.72],[cx-r*.72,cy+r*.72]],color,w*.055);}
+}
+
+function anniversaryPsLogo(ctx,w,h) {
+  ctx.save();ctx.translate(-w*.12,-h*.11);ctx.scale(w*1.28/512,h*1.2/512);
+  const outline='#202329';
+  const ribbon=()=>{
+    ctx.beginPath();ctx.moveTo(64,338);ctx.bezierCurveTo(93,302,159,294,220,309);
+    ctx.lineTo(382,349);ctx.bezierCurveTo(432,362,428,388,382,404);
+    ctx.lineTo(267,447);ctx.lineTo(221,427);ctx.lineTo(355,379);
+    ctx.bezierCurveTo(370,374,366,369,349,365);ctx.lineTo(206,334);
+    ctx.bezierCurveTo(158,323,112,323,91,340);ctx.bezierCurveTo(120,341,158,350,195,356);
+    ctx.lineTo(193,386);ctx.bezierCurveTo(131,384,68,368,64,338);ctx.closePath();
+  };
+  ribbon();ctx.fillStyle=outline;ctx.fill();
+  ctx.beginPath();ctx.moveTo(78,339);ctx.bezierCurveTo(107,317,153,314,200,326);
+  ctx.lineTo(239,337);ctx.lineTo(218,350);ctx.bezierCurveTo(172,336,125,330,92,350);ctx.closePath();
+  ctx.fillStyle='#3d9b7d';ctx.fill();
+  ctx.beginPath();ctx.moveTo(79,344);ctx.bezierCurveTo(107,348,150,355,194,365);
+  ctx.lineTo(191,379);ctx.bezierCurveTo(139,376,91,364,79,344);ctx.closePath();
+  ctx.fillStyle='#e4bd38';ctx.fill();
+  ctx.beginPath();ctx.moveTo(223,344);ctx.lineTo(370,358);ctx.bezierCurveTo(395,361,401,371,380,380);
+  ctx.lineTo(272,422);ctx.lineTo(244,409);ctx.lineTo(354,371);ctx.bezierCurveTo(364,367,361,365,347,362);
+  ctx.lineTo(218,350);ctx.closePath();ctx.fillStyle='#4286bd';ctx.fill();
+  ctx.beginPath();ctx.moveTo(223,344);ctx.lineTo(347,356);ctx.bezierCurveTo(358,358,366,362,365,367);
+  ctx.lineTo(351,373);ctx.bezierCurveTo(357,369,354,366,344,364);ctx.lineTo(218,350);ctx.closePath();
+  ctx.fillStyle='#3d9b7d';ctx.fill();
+  ctx.beginPath();ctx.moveTo(222,94);ctx.bezierCurveTo(222,72,244,64,273,73);
+  ctx.bezierCurveTo(312,84,337,101,337,128);ctx.lineTo(337,221);
+  ctx.bezierCurveTo(337,247,316,262,278,256);ctx.lineTo(278,420);
+  ctx.lineTo(222,404);ctx.closePath();
+  ctx.moveTo(278,113);ctx.bezierCurveTo(298,119,308,130,308,146);
+  ctx.lineTo(308,186);ctx.bezierCurveTo(308,199,296,204,278,199);ctx.closePath();
+  ctx.fillStyle='#e24548';ctx.fill('evenodd');ctx.restore();
 }
 
 function standardInk(hex){
@@ -144,10 +177,7 @@ export function createEditionCanvas(id,part,group,detail='low') {
   }
   if(part==='ps') {
     if(id!=='anniversary')return null;
-    ctx.fillStyle='#e24548';ctx.fillRect(0,0,w,h*.62);
-    ctx.fillStyle='#e4bd38';ctx.fillRect(0,h*.62,w*.36,h);
-    ctx.fillStyle='#4286bd';ctx.fillRect(w*.36,h*.62,w*.32,h);
-    ctx.fillStyle='#3d9b7d';ctx.fillRect(w*.68,h*.62,w*.32,h);return canvas;
+    anniversaryPsLogo(ctx,w,h);return canvas;
   }
   if(id==='gt'&&touch) {
     // Rebuild the pad's simple printed geometry as clean vectors. Photograph
