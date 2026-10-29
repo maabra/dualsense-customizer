@@ -117,12 +117,6 @@ function faceInk(id,part){
  if(id==='spiderman')return '#6c747f';
  return additionalEditions.has(id)?(['lisa','marathon','yotei-black','gta-white'].includes(id)?'#747a83':'#74767e'):'#d8dce0';
 }
-export function createButtonSymbolCanvas(entry,part){
- const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;
- faceSymbol(canvas.getContext('2d'),part,recreatedEditions.has(entry.id)?faceInk(entry.id,part):standardInk(entry.hex),canvas.width,canvas.height);
- return canvas;
-}
-
 export function createControlCanvas(hex,part,group,detail='low') {
   const canvas=document.createElement('canvas');canvas.width=canvas.height=detail==='low'||detail.endsWith('-mobile')?512:1024;
   const ctx=canvas.getContext('2d'),w=canvas.width;
@@ -156,7 +150,8 @@ export function createEditionCanvas(id,part,group,detail='low') {
   if(id==='godofwar')base=['shell','rear'].includes(group)?'#35447c':['buttons','dpad'].includes(group)?'#252934':'#dee8ef';
   if(id==='anniversary')base=['buttons','dpad','ps','trim'].includes(group)?'#606875':'#a1a4ad';
   if(additionalEditions.has(id))base=catalogPartColor(id,group,part);
-  ctx.fillStyle=base;ctx.fillRect(0,0,w,h);
+  // Keep the Anniversary PS emblem transparent so the model's substrate remains visible.
+  if(group!=='ps'||id!=='anniversary'){ctx.fillStyle=base;ctx.fillRect(0,0,w,h);}
   if(group==='buttons') {
     faceSymbol(ctx,part,faceInk(id,part),w,h);return canvas;
   }

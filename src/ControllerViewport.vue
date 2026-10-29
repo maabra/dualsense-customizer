@@ -11,7 +11,7 @@ import { transferProgress } from './loading';
 import {createSurfaceCanvas} from './surface-artwork';
 import {createNativeUvBaker,disposeBakedArtwork} from './native-uv-baker';
 import {additionalEditions,catalogTracesReady,createEditionReliefCanvas,loadCatalogTraces} from './catalog-artwork';
-import { createEditionCanvas, createControlCanvas, createButtonSymbolCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
+import { createEditionCanvas, createControlCanvas, artworkUVs, editionPartColor, editionSurface } from './edition-artwork';
 
 const container=ref(null),emit=defineEmits(['status']);
 let api;
@@ -122,7 +122,7 @@ function createStudio(container, report) {
   let model, frame, dead = false, activeState, activeLight, busy = false, quality = 'low';
   const uploads = new Map();
   const artworkCache=new Map();
-  let uvBaker,buttonLabels=new Map(),catalogTracesLoad=null;
+  let uvBaker,catalogTracesLoad=null;
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
   function loadSelectedCatalogArtwork(state){
     if(catalogTracesReady()||catalogTracesLoad||!Object.values(state).some(selection=>additionalEditions.has(selection.id)))return;
@@ -143,11 +143,6 @@ function createStudio(container, report) {
       const detail=quality!=='low'&&mobile?quality+'-mobile':quality;
       const canvas=entry.artwork==='recreated'?createEditionCanvas(entry.id,part,group,detail):createControlCanvas(entry.hex,part,group,detail);
       if(!canvas){artworkCache.set(key,null);return null;}
-      if(group==='buttons'){
-        // The symbol is printed on its own insert layer. Keep the underlying
-        // molded core plain so refraction cannot reveal a second copy.
-        const ctx=canvas.getContext('2d');ctx.fillStyle=editionPartColor(entry,part,group)||paletteColor(entry,part);ctx.fillRect(0,0,canvas.width,canvas.height);
-      }
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       const surface=new THREE.CanvasTexture(createSurfaceCanvas(canvas,entry.id,group));surface.colorSpace=THREE.NoColorSpace;surface.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());texture.userData.surface=surface;
       const reliefCanvas=createEditionReliefCanvas(canvas,entry.id,group);
@@ -307,41 +302,29 @@ function createStudio(container, report) {
           `);
         };
       });
-      // Each supplied face button has an outer clear cap and an insert below.
-      // A small printed-symbol layer sits between them, independent of their
-      // differing UV charts in the three supplied model variants.
+      // Identify the outer clear caps so button artwork can render on the inserts below.
       const buttonLayers=new Map();
       next.traverse(obj=>{
         if(!obj.isMesh||!['buttons','dpad'].includes(parentPart(obj.material.name)))return;
         const index=obj.geometry.index,p=obj.geometry.attributes.position;
-        let z=0;const count=index?.count||p.count,bounds=new THREE.Box3();
+        let z=0;const count=index?.count||p.count;
         for(let i=0;i<count;i++){
           const vertex=index?index.getX(i):i;
-          z+=p.getZ(vertex);bounds.expandByPoint(new THREE.Vector3().fromBufferAttribute(p,vertex));
+          z+=p.getZ(vertex);
         }
         const layers=buttonLayers.get(obj.material.name)||[];
-        layers.push({obj,z:z/count,bounds});buttonLayers.set(obj.material.name,layers);
+        layers.push({obj,z:z/count});buttonLayers.set(obj.material.name,layers);
       });
-      const nextLabels=new Map();
       for(const [part,layers] of buttonLayers){
         const far=Math.max(...layers.map(layer=>layer.z)),near=Math.min(...layers.map(layer=>layer.z));
         for(const {obj,z} of layers){
           obj.material.userData.clearCap=layers.length>1&&far-near>.0005&&z>(far+near)/2;
           obj.renderOrder=obj.material.userData.clearCap?20:10;
         }
-        if(parentPart(part)!=='buttons')continue;
-        const insert=layers.reduce((a,b)=>a.z<b.z?a:b).obj;
-        const insertLayer=layers.find(layer=>layer.obj===insert),cap=layers.find(layer=>layer.obj.material.userData.clearCap);
-        const bounds=insertLayer.bounds,footprint=cap?.bounds||bounds;
-        const size=Math.min(footprint.max.x-footprint.min.x,footprint.max.y-footprint.min.y)*.95;
-        const label=new THREE.Mesh(new THREE.PlaneGeometry(size,size),new THREE.MeshBasicMaterial({color:0xffffff,alphaTest:.2,depthWrite:true,toneMapped:false}));
-        label.material.name='symbol:'+part;label.renderOrder=11;
-        label.position.set((footprint.min.x+footprint.max.x)/2,(footprint.min.y+footprint.max.y)/2,bounds.max.z+.0008).applyMatrix4(insert.matrix);
-        label.quaternion.copy(insert.quaternion);insert.parent.add(label);nextLabels.set(part,{mesh:label,key:null});
       }
       if(model) {pivot.remove(model); release(model);}
       uvBaker?.dispose();artworkCache.forEach(disposeBakedArtwork);artworkCache.clear();
-      model = next;buttonLabels=nextLabels;pivot.add(model);renderer.shadowMap.needsUpdate=true;quality = level;uvBaker=createNativeUvBaker(renderer,model);
+      model = next;pivot.add(model);renderer.shadowMap.needsUpdate=true;quality = level;uvBaker=createNativeUvBaker(renderer,model);
       if(activeState) apply(activeState, activeLight);
       report({loading:false,quality:level});
     } catch(error) {
@@ -357,17 +340,6 @@ function createStudio(container, report) {
   function apply(state, light = '#0072ff') {
     activeState = state;activeLight = light;needsRender=true;
     loadSelectedCatalogArtwork(state);
-    for(const [part,label] of buttonLabels){
-      const selection=state[part];if(!selection)continue;
-      label.mesh.visible=!uploads.has(part);
-      const entry=byId[selection.id]||{id:'custom:'+selection.hex,hex:selection.hex||'#69aaff'};
-      if(label.key!==entry.id){
-        label.mesh.material.map?.dispose();
-        const map=new THREE.CanvasTexture(createButtonSymbolCanvas(entry,part));
-        map.colorSpace=THREE.SRGBColorSpace;map.anisotropy=renderer.capabilities.getMaxAnisotropy();
-        label.mesh.material.map=map;label.mesh.material.needsUpdate=true;label.key=entry.id;
-      }
-    }
     barLights.forEach(lamp=>lamp.color.set(light));barHalos.forEach(halo=>halo.material.color.set(light));
     model?.traverse(obj => {
       if(!obj.isMesh) return;
@@ -387,7 +359,7 @@ function createStudio(container, report) {
       m.userData.uvBounds.value.fromArray(artwork?.userData.uvBounds||[0,0,1,1]);
       m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
-      m.userData.blend.value = upload ? 0 : native ? 0 : 1;
+      m.userData.blend.value = upload||native||(group==='ps'&&selection.id==='anniversary') ? 0 : 1;
       m.userData.tint.value.set(selection.id === 'custom' ? selection.hex || '#69aaff' : editionPartColor(entry,part,group)||paletteColor(entry,part));
       const finish = selection.finish === 'original' ? entry?.finish || 'matte' : selection.finish;
       const original=native && selection.finish==='original' && !upload;
