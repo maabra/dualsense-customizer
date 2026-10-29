@@ -60,7 +60,7 @@ function spider(ctx,x,y,scale,color) {
   ctx.restore();
 }
 function faceSymbol(ctx,part,color,w,h) {
-  const cx=w/2,cy=h/2,r=w*.26;ctx.strokeStyle=color;ctx.lineWidth=w*.055;ctx.lineJoin='round';ctx.lineCap='round';
+  const cx=w/2,cy=h/2,r=w*.32;ctx.strokeStyle=color;ctx.lineWidth=w*.055;ctx.lineJoin='round';ctx.lineCap='round';
   if(part==='button-triangle') {line(ctx,[[cx,cy-r],[cx+r*.92,cy+r*.65],[cx-r*.92,cy+r*.65],[cx,cy-r]],color,w*.055);}
   else if(part==='button-square')ctx.strokeRect(cx-r*.72,cy-r*.72,r*1.44,r*1.44);
   else if(part==='button-circle'){ctx.beginPath();ctx.arc(cx,cy,r*.85,0,Math.PI*2);ctx.stroke();}
