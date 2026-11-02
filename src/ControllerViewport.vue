@@ -126,6 +126,7 @@ function createStudio(container, report) {
   const emptyArtwork=new THREE.DataTexture(new Uint8Array([255,255,255,0]),1,1);emptyArtwork.needsUpdate=true;
   function loadSelectedCatalogArtwork(state){
     if(catalogTracesReady()||catalogTracesLoad||!Object.values(state).some(selection=>additionalEditions.has(selection.id)))return;
+    report({artworkLoading:true});
     catalogTracesLoad=loadCatalogTraces().then(()=>{
       catalogTracesLoad=null;
       if(!dead&&activeState)apply(activeState,activeLight);
@@ -133,7 +134,7 @@ function createStudio(container, report) {
       catalogTracesLoad=null;
       report({error:'Edition artwork could not be loaded. Check your connection and try again.'});
       console.error(error);
-    });
+    }).finally(()=>{if(!dead)report({artworkLoading:false});});
   }
   function artworkFor(entry,part,group) {
     if(!entry||entry.artwork!=='recreated'&&!['buttons','dpad'].includes(group))return null;
@@ -148,7 +149,7 @@ function createStudio(container, report) {
       const reliefCanvas=createEditionReliefCanvas(canvas,entry.id,group);
       const relief=reliefCanvas?new THREE.CanvasTexture(reliefCanvas):null;
       if(relief)relief.colorSpace=THREE.NoColorSpace;
-      texture.userData.followCurves=group==='shell'||entry.id.startsWith('gta');surface.userData.followCurves=texture.userData.followCurves;
+      texture.userData.followCurves=group==='shell'||entry.id.startsWith('gta')||(entry.id==='genshin'&&group==='rear');surface.userData.followCurves=texture.userData.followCurves;
       if(relief)relief.userData.followCurves=true;
       texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
       const baked=uvBaker?.bake(texture,surface,part,group,relief);
@@ -208,6 +209,7 @@ function createStudio(container, report) {
         material.userData.originalRoughnessMap = material.roughnessMap;
         material.userData.tint = {value:new THREE.Color('#ffffff')};
         material.userData.blend = {value:0};
+        material.userData.hyperpop = {value:0};
         material.userData.artwork={value:emptyArtwork};material.userData.artworkEnabled={value:0};
         material.userData.surface={value:emptyArtwork};material.userData.surfaceEnabled={value:0};
         material.userData.uvBounds={value:new THREE.Vector4(0,0,1,1)};
@@ -244,16 +246,20 @@ function createStudio(container, report) {
           }
           shader.uniforms.studioTint = material.userData.tint;
           shader.uniforms.studioBlend = material.userData.blend;
+          shader.uniforms.studioHyperpop = material.userData.hyperpop;
           shader.uniforms.studioArtwork=material.userData.artwork;shader.uniforms.studioArtworkEnabled=material.userData.artworkEnabled;
           shader.uniforms.studioUvBounds=material.userData.uvBounds;
-          shader.vertexShader='uniform vec4 studioUvBounds;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
-          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvEditionUV=(uv-studioUvBounds.xy)/studioUvBounds.zw;\nvEditionFacing=max(0.0,${group==='rear'?'-normal.z':'normal.z'});`);
-          shader.fragmentShader = 'uniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
+          shader.vertexShader='varying float vStudioHeight;\nuniform vec4 studioUvBounds;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n'+shader.vertexShader;
+          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>\nvStudioHeight=position.y;\nvEditionUV=(uv-studioUvBounds.xy)/studioUvBounds.zw;\nvEditionFacing=max(0.0,${group==='rear'?'-normal.z':'normal.z'});`);
+          shader.fragmentShader = 'uniform float studioHyperpop;\nvarying float vStudioHeight;\nuniform vec3 studioTint;\nuniform float studioBlend;\nuniform sampler2D studioArtwork;\nuniform float studioArtworkEnabled;\nvarying vec2 vEditionUV;\nvarying float vEditionFacing;\n' + shader.fragmentShader;
           shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', `
             #include <map_fragment>
             ${['buttons','dpad'].includes(group)?'diffuseColor.a=1.0;':''}
-            float detail = 0.72 + 0.28 * dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-            diffuseColor.rgb = mix(diffuseColor.rgb, studioTint * detail, studioBlend);
+            // Normal and roughness maps retain molded detail without baking
+            // the source controller's albedo into replacement paint colors.
+            float detail = 1.0;
+            vec3 paint = mix(studioTint, mix(vec3(0.003), studioTint, (1.0-smoothstep(-0.40, 0.38, vStudioHeight))), studioHyperpop);
+            diffuseColor.rgb = mix(diffuseColor.rgb, paint * detail, studioBlend);
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
             editionArt.rgb/=max(editionArt.a,0.0001);
             float artMask=studioArtworkEnabled*editionArt.a;
@@ -348,10 +354,12 @@ function createStudio(container, report) {
       if(!state[part]) return;
       const selection = state[part]; const entry = byId[selection.id];
       if(!entry && selection.id !== 'custom') return;
-      const native = selection.id === defaultId(part);
+      const factoryWhite=['factory-white','white'].includes(selection.id);
+      const native = factoryWhite || selection.id === defaultId(part);
       const upload = uploads.get(part);
       const group=parentPart(part),appearance=entry||{id:'custom:'+selection.hex,hex:selection.hex||'#69aaff',type:'standard'};
-      const artwork=upload?null:artworkFor(appearance,part,group);
+      const artwork=upload||factoryWhite?null:artworkFor(appearance,part,group);
+      m.userData.hyperpop.value=!upload&&['techno','remix','rhythm'].includes(selection.id)?1:0;
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
       m.userData.relief.value=artwork?.userData.relief||emptyArtwork;
@@ -381,9 +389,9 @@ function createStudio(container, report) {
       if(chroma){
         const polished=['shell','rear','trim'].includes(group);
         if(polished){
-          m.roughness=.13;m.metalness=chromaId==='pearl'?.18:.4;
+          m.roughness=chromaId==='pearl'?.23:.13;m.metalness=chromaId==='pearl'?.03:.4;
           m.clearcoat=1;m.clearcoatRoughness=.065;
-          m.iridescence=chromaId==='pearl'?.55:.85;
+          m.iridescence=chromaId==='pearl'?.22:.85;
           m.iridescenceIOR=1.35;
           m.iridescenceThicknessRange={pearl:[240,360],indigo:[320,480],teal:[180,300]}[chromaId];
           m.normalScale.multiplyScalar(.3);

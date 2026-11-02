@@ -24,16 +24,17 @@ export const groups = {
 };
 export const parentPart = part => Object.keys(groups).find(key=>groups[key].includes(part)) || part;
 export const targetsFor = part => part==='all'?advancedParts.map(([key])=>key):groups[part] || [part];
-export const defaultId = part => ['trim','sticks','triggers','ps'].includes(parentPart(part)) ? 'black' : 'white';
+export const defaultId = part => ['trim','sticks','triggers','ps'].includes(parentPart(part)) ? 'black' : 'factory-white';
 const color = (id, name, hex, finish = 'matte') => ({ id, name, hex, finish, type: 'standard' });
 const edition = (id, name, hex, accent = '#202126', finish = 'satin') => ({ id, name, hex, accent, finish, type: 'edition', texture: null });
 export const catalog = [
+  color('factory-white', 'Original White', '#e5e7e7'),
   color('white', 'Classic White', '#e5e7e7'), color('black', 'Midnight Black', '#24252a'),
   color('cosmic', 'Cosmic Red', '#9c274b'), color('blue', 'Starlight Blue', '#62b9df'),
   color('purple', 'Galactic Purple', '#6552ad'), color('pink', 'Nova Pink', '#e84e99'),
   color('cobalt', 'Cobalt Blue', '#2546ac', 'metallic'), color('volcanic', 'Volcanic Red', '#ad343d', 'metallic'),
   color('silver', 'Sterling Silver', '#a7abad', 'metallic'), color('indigo', 'Chroma Indigo', '#6464af', 'metallic'),
-  color('pearl', 'Chroma Pearl', '#e8d9d5', 'metallic'), color('teal', 'Chroma Teal', '#529c8b', 'metallic'),
+  color('pearl', 'Chroma Pearl', '#f5f3ef', 'satin'), color('teal', 'Chroma Teal', '#529c8b', 'metallic'),
   color('techno', 'Techno Red', '#d51d32', 'gloss'), color('remix', 'Remix Green', '#93d149', 'gloss'),
   color('rhythm', 'Rhythm Blue', '#316fe9', 'gloss'),
   edition('anniversary', '30th Anniversary', '#a5a5a0', '#626361'),
