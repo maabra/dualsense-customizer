@@ -1,5 +1,6 @@
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {VectorCanvas} from './vector-canvas.mjs';
+import {anniversaryPsLogo} from '../src/anniversary-ps.js';
 
 // Load the actual drawing modules with an SVG context in place of the DOM
 // canvas. This preserves one authoring implementation for app and SVG masters.
@@ -19,8 +20,8 @@ for(const key of [...catalog.additionalEditions,'gt','godofwar','spiderman','gta
  if(!layers?.some(layer=>layer.paths.length))throw new Error(`Missing reference vector layer: ${key}`);
 }
 if(!referenceTraces.claws?.length)throw new Error('Missing Wolverine vector contours');
-const names=['referenceTraces',...Object.keys(catalog),'document'];
-const values=[referenceTraces,...Object.values(catalog),document];
+const names=['referenceTraces',...Object.keys(catalog),'anniversaryPsLogo','document'];
+const values=[referenceTraces,...Object.values(catalog),anniversaryPsLogo,document];
 const drawing=new Function(...names,moduleBody(await read('src/edition-artwork.js'))+';return {createEditionCanvas,recreatedEditions};')(...values);
 const groups=[['shell','shell-left'],['rear','rear-left'],['trim','trim-left'],['touchpad','touchpad'],['ps','ps'],
  ...['triangle','circle','cross','square'].map(p=>['buttons','button-'+p]),...['up','right','down','left'].map(p=>['dpad','dpad-'+p])];

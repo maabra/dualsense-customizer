@@ -64,7 +64,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue';
-import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults } from './catalog';
+import { parts, advancedParts, targetsFor, parentPart, catalog, byId, defaults, standardPresetId, matchesStandardPreset } from './catalog';
 import MobileDrawer from './MobileDrawer.vue';
 import StudioLogo from './StudioLogo.vue';
 import PartIcon from './PartIcon.vue';
@@ -130,7 +130,7 @@ const visibleParts = computed(()=>advanced.value ? advancedParts : parts);
 const selectedTargets = computed(()=>targetsFor(selectedPart.value));
 function selectionName(part){const choices=targetsFor(part).map(key=>build[key]);return choices.every(choice=>choice.id===choices[0].id)?byId[choices[0].id]?.name||'Custom color':'Mixed';}
 const current = computed(()=>build[selectedTargets.value[0]]);
-const mixed = computed(()=>selectedTargets.value.some(key=>JSON.stringify(build[key])!==JSON.stringify(current.value)));
+const mixed = computed(()=>!(selectedPart.value==='all'&&matchesStandardPreset(build))&&selectedTargets.value.some(key=>JSON.stringify(build[key])!==JSON.stringify(current.value)));
 const mixedFinish = computed(()=>selectedTargets.value.some(key=>build[key].finish!==current.value.finish));
 const hasUpload = computed(()=>selectedTargets.value.some(key=>uploaded[key]));
 function setAdvanced(value) {
@@ -153,6 +153,7 @@ const colorDescription=computed(()=>{
   if(['techno','remix','rhythm'].includes(id))return 'Glossy black-to-neon gradient wrapping the front and rear shells.';
   if(id==='pearl')return 'Pearl white with a subtle pink and cream sheen that shifts with the viewing angle.';
   if(['indigo','teal'].includes(id))return 'Iridescent color preview. The retail Chroma finish shifts with the viewing angle.';
+  if(selectedPart.value==='all')return 'Retail color layout: colored shell and controls with black center trim, thumbsticks, triggers and PS button. Individual parts can be painted separately.';
   return 'Approximate retail color and finish under studio lighting; exact physical color matching is not guaranteed.';
 });
 const standardColors = catalog.filter(c=>c.type==='standard');
@@ -171,9 +172,9 @@ watch(canvasWrap,viewport=>{
   }
 },{flush:'post'});
 function notify(message) {toastText.value=message;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastText.value='',3500);}
-function snapshot() {return {version:2,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
+function snapshot() {return {version:3,parts:JSON.parse(JSON.stringify(build)),light:light.value};}
 function restore(data) {
-  if(![1,2].includes(data?.version) || !data.parts || typeof data.parts!=='object') return;
+  if(![1,2,3].includes(data?.version) || !data.parts || typeof data.parts!=='object') return;
   for(const [p] of advancedParts) {
     const v=data.parts[p] || (data.version===1 ? data.parts[parentPart(p)] : null);
     if(!v || (!Object.hasOwn(byId,v.id) && v.id!=='custom')) continue;
@@ -182,10 +183,16 @@ function restore(data) {
     if(['original','matte','satin','metallic','gloss'].includes(v.printFinish))build[p].printFinish=v.printFinish;
     if(v.id==='custom') build[p].hex=/^#[a-f\d]{6}$/i.test(v.hex)?v.hex:'#c5f36b';
   }
+  // Older whole-controller color selections painted every component. Restore
+  // uniform named colorways as their retail layout; mixed/custom builds stay explicit.
+  const saved=advancedParts.map(([part])=>build[part]),uniform=byId[saved[0].id];
+  if(data.version<3&&uniform?.type==='standard'&&saved.every(selection=>selection.id===uniform.id)){
+    for(const [part] of advancedParts)build[part]={...build[part],id:standardPresetId(uniform,part)};
+  }
   if(/^#[a-f\d]{6}$/i.test(data.light)) light.value=data.light;
 }
 function choose(c) {
-  const apply=()=>{clearSelectedUploads();for(const key of selectedTargets.value)build[key]={id:c.id,finish:'original'};};
+  const apply=()=>{clearSelectedUploads();for(const key of selectedTargets.value)build[key]={id:selectedPart.value==='all'&&c.type==='standard'?standardPresetId(c,key):c.id,finish:'original'};};
   if(c.artwork==='recreated')return withArtworkLoading(apply);
   if(!artworkBusy.value)apply();
 }

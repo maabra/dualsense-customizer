@@ -149,7 +149,7 @@ function createStudio(container, report) {
       const reliefCanvas=createEditionReliefCanvas(canvas,entry.id,group);
       const relief=reliefCanvas?new THREE.CanvasTexture(reliefCanvas):null;
       if(relief)relief.colorSpace=THREE.NoColorSpace;
-      texture.userData.followCurves=group==='shell'||entry.id.startsWith('gta')||(entry.id==='genshin'&&group==='rear');surface.userData.followCurves=texture.userData.followCurves;
+      texture.userData.followCurves=['shell','rear','trim','touchpad'].includes(group);surface.userData.followCurves=texture.userData.followCurves;
       if(relief)relief.userData.followCurves=true;
       texture.anisotropy=renderer.capabilities.getMaxAnisotropy();
       const baked=uvBaker?.bake(texture,surface,part,group,relief);
@@ -294,6 +294,15 @@ function createStudio(container, report) {
             #endif
           `);
           shader.uniforms.studioRelief=material.userData.relief;shader.uniforms.studioReliefScale=material.userData.reliefScale;
+          shader.vertexShader='uniform sampler2D studioRelief;uniform float studioReliefScale;\n'+shader.vertexShader;
+          shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+            if(studioReliefScale>0.0){
+              vec2 reliefUv=(uv-studioUvBounds.xy)/studioUvBounds.zw;
+              vec4 reliefSample=texture2D(studioRelief,reliefUv);
+              float reliefHeight=reliefSample.a>0.5?reliefSample.r/reliefSample.a:0.5;
+              transformed+=normal*(reliefHeight-0.5)*studioReliefScale;
+            }
+          `);
           shader.fragmentShader=`uniform sampler2D studioRelief;uniform float studioReliefScale;
             float studioHeight(vec2 uv){vec4 value=texture2D(studioRelief,uv);return value.a>0.5?value.r/value.a:0.5;}
           `+shader.fragmentShader;
@@ -301,7 +310,9 @@ function createStudio(container, report) {
             if(studioReliefScale>0.0){
               vec2 uvDx=dFdx(vEditionUV),uvDy=dFdy(vEditionUV);float height=studioHeight(vEditionUV);
               vec2 dh=vec2(studioHeight(vEditionUV+uvDx)-height,studioHeight(vEditionUV+uvDy)-height)*studioReliefScale;
-              vec3 dx=normalize(dFdx(-vViewPosition)),dy=normalize(dFdy(-vViewPosition));
+              // Keep screen-space derivative lengths. Normalizing these vectors
+              // erased almost all physical depth from the molded artwork.
+              vec3 dx=dFdx(-vViewPosition),dy=dFdy(-vViewPosition);
               vec3 rx=cross(dy,normal),ry=cross(normal,dx);float determinant=dot(dx,rx)*faceDirection;
               normal=normalize(abs(determinant)*normal-sign(determinant)*(dh.x*rx+dh.y*ry));
             }
@@ -346,6 +357,10 @@ function createStudio(container, report) {
   function apply(state, light = '#0072ff') {
     activeState = state;activeLight = light;needsRender=true;
     loadSelectedCatalogArtwork(state);
+    // Release obsolete high-resolution targets before allocating the next
+    // edition, so changing designs does not temporarily double GPU memory.
+    const needed=new Set(Object.entries(state).map(([part,selection])=>quality+'|'+selection.id+'|'+(['buttons','dpad'].includes(parentPart(part))?part:parentPart(part))));
+    for(const [key,texture] of artworkCache)if(!needed.has(key)){disposeBakedArtwork(texture);artworkCache.delete(key);}
     barLights.forEach(lamp=>lamp.color.set(light));barHalos.forEach(halo=>halo.material.color.set(light));
     model?.traverse(obj => {
       if(!obj.isMesh) return;
@@ -363,7 +378,7 @@ function createStudio(container, report) {
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
       m.userData.relief.value=artwork?.userData.relief||emptyArtwork;
-      m.userData.reliefScale.value=artwork?.userData.relief?(group==='touchpad'?.005:.009):0;
+      m.userData.reliefScale.value=artwork?.userData.relief?(entry?.id.startsWith('gta')?(group==='touchpad'?.012:.018):(group==='touchpad'?.005:.009)):0;
       m.userData.uvBounds.value.fromArray(artwork?.userData.uvBounds||[0,0,1,1]);
       m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
@@ -386,6 +401,11 @@ function createStudio(container, report) {
       const chromaId=selection.id==='lisa'?'pearl':selection.id;
       const chroma=['pearl','indigo','teal'].includes(chromaId)&&selection.finish==='original'&&!upload;
       m.normalScale.copy(m.userData.originalNormalScale);
+      if(entry?.id.startsWith('gta')&&!upload)m.normalScale.multiplyScalar(.35);
+      if(entry?.id==='yotei-gold'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='trim'?.25:.12);
+      if(entry?.id==='helldivers'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='trim'?.3:.20);
+      if(entry?.id==='concord'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(.3);
+      if(entry?.id.startsWith('astro')&&!upload&&['shell','touchpad','trim','triggers'].includes(group))m.normalScale.multiplyScalar(group==='touchpad'?.035:.12);
       if(chroma){
         const polished=['shell','rear','trim'].includes(group);
         if(polished){

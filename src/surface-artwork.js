@@ -23,7 +23,7 @@ export function createSurfaceCanvas(artwork,id,group) {
     else if(yellow){rough=.38;metal=0;coat=.12;ink=1;}
    }else if(['ff16','hogwarts','yotei-gold','genshin'].includes(id)) {
     if(r>.29&&r>b*1.15&&g>b*1.08){
-     const profile={ff16:[.38,.48,.1],hogwarts:[.32,.6,.1],'yotei-gold':[.32,.62,.12],genshin:[.4,.4,.08]}[id];
+     const profile={ff16:[.38,.48,.1],hogwarts:[.32,.6,.1],'yotei-gold':[.38,.48,.08],genshin:[.4,.4,.08]}[id];
      [rough,metal,coat]=profile;ink=1;
     }
    }else if(id==='lastofus') {
@@ -32,9 +32,9 @@ export function createSurfaceCanvas(artwork,id,group) {
     if(r>g*1.5&&r>.3){rough=.35;coat=.25;ink=1;}
     else if(lo>.55){rough=.42;coat=.12;ink=1;}
    }else if(id==='godofwar'&&group==='touchpad'&&b>r*1.25){rough=.43;coat=.08;ink=1;}
-   else if(id.startsWith('astro')&&b>r*1.3&&b>g*1.1&&b>.4){rough=.18;coat=.7;ink=1;}
-   else if(id==='helldivers'&&r>.5&&g>.4&&b<.35){rough=.45;coat=.05;ink=1;}
-   else if(id==='helldivers'&&hi<.12){rough=.76;coat=0;ink=1;}
+   else if(id.startsWith('astro')&&group==='shell'&&b>r*1.3&&b>g*1.1&&b>.4){rough=.17;metal=.30;coat=.85;ink=1;}
+   else if(id==='helldivers'&&r>.5&&g>.4&&b<.35){rough=.58;coat=.035;ink=1;}
+   else if(id==='helldivers'&&hi<.12){rough=.62;coat=.025;ink=1;}
    else if(id==='monsterhunter'&&chroma<.12&&hi>.35){rough=.33;metal=.55;coat=.15;ink=1;}
    else if(id==='monsterhunter'&&r<.69&&r>g*1.5){rough=.2;coat=.5;ink=1;}
    else if(id==='gow20'&&r>g*1.7&&r>.35){rough=.45;coat=.08;ink=1;}

@@ -50,4 +50,28 @@ See [RIGHTS.md](./RIGHTS.md) for the no-ownership, testing-purpose notice and pr
 
 Chroma Pearl, Indigo and Teal use a polished clear coat, lower surface roughness and separate iridescent film ranges on the shell, rear and trim. The underlying normal strength is reduced for the smooth coated appearance. Thumbstick rubber remains matte, and manual finish overrides restore their selected material behavior. References: https://direct.playstation.com/en-us/buy-accessories/dualsense-wireless-controller-chroma-indigo-for-ps5-pc-mac-mobile and https://direct.playstation.com/en-us/buy-accessories/dualsense-wireless-controller-chroma-pearl . These are visual estimates rather than measured coating specifications.
 
-Gran Turismo shell artwork is traced from the official 3840-pixel front render, including the small slogan and red badge. GT and Gray Camouflage shell placement uses a smooth registration fitted to 311 landmarks on the supplied model, including D-pad, face-button and Create/Options perimeters. This warps the continuous artwork into the native UV bake; it does not mask out artwork around controls. Touchpad registration remains independent.
+Gran Turismo shell artwork is traced from the official 3840-pixel front render, including the small slogan and red badge. GT shell placement uses a smooth registration fitted to landmarks on the supplied model. Gray Camouflage uses cleaned four-ink vector contours from the high-resolution reference, with independently registered shell and touchpad masters and clipped controller-symbol micro-patterns. LISA uses a separately registered high-resolution eye print and clean grip vectors. Factory controls and photographed highlights are excluded from these artwork masters. Enclosure artwork bakes across the complete native UV islands, including side-facing surfaces, without a camera-facing fade at the corners. GTA artwork uses cleaned relief contours, screen-space bump derivatives, and vertex displacement for molded depth; the base controller geometry remains the supplied DualSense model.
+
+
+## Ghost of Yōtei Gold artwork
+
+The front artwork is extracted as a single flat gold ink layer from the official [PlayStation controller render](https://gmedia.playstation.com/is/image/SIEPDC/Ghost-of-Yotei-LE-controllers-image-block-01-en-02jul25), with separately registered shell and touchpad contours. Cream photo shading and hardware outlines are excluded. Isolated photographic specks are excluded while long dry-brush gaps and fine bristle channels remain. The cream shell uses a fine plastic finish, with reduced source normal strength; only the gold print is metallic. Tapered molded cuts use a separate approximate relief master. Gray controls and a more textured rear remain independent of the gold print. Additional reference: [official product gallery](https://www.playstation.com/en-us/ps5/ghost-of-yotei-limited-edition-ps5-bundle-and-accessories/).
+
+
+## Helldivers 2 artwork
+
+Shell and touchpad print are independently registered from the supplied high-resolution front reference. Yellow paint and gray labels are separate vector layers; controls, photographic shading, and broad shoulder reflections are excluded. Deliberate chipped paint is retained. The touchpad dot grid uses evenly spaced vector circles, and the shell uses reduced normal strength with a consistent matte material. Rubber controls and the rear retain their own finishes.
+
+
+## Concord artwork
+
+The geometric front graphics are reconstructed as clean vector curves, ink panels, clipped hatch bands and small printed marks using the front reference. This replaces low-resolution photographic contours and excludes stray background colors. The intentional radar marking beside Triangle is retained; no duplicate hardware rims are printed. The rear uses its separate reference-derived logo. The front normal strength is reduced for a consistent matte substrate.
+
+
+## Astro Bot Joyful layout
+
+Joyful uses the reference's individual cyan and dim-blue eye dots, with continuous curved cobalt grip inlays, white bumpers/triggers, and cyan control symbols. White plastic and glossy blue ink have independent finishes. Molded channels around the sticks and handles use separate shell and trim relief masters. Both Astro variants share the corrected body layout while retaining their distinct eye expressions. The layout is self-contained and remains identical before and after downloading other edition artwork. Reference: https://www.playstation.com/en-us/games/astro-bot/ .
+
+## 30th Anniversary PS button
+
+The colored emblem uses the supplied model's raised P and S face boundaries in local artwork coordinates, shared by both model qualities. The native UV bake masks out the recessed backing using the button's sloped cap plane. This preserves the black surround and side walls without projecting a second, differently shaped logo onto the button. Reference: https://www.playstation.com/en-pl/30th-anniversary-collection/ .

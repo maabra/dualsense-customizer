@@ -10,14 +10,15 @@ export function gtaSurface(id,group) {
  if(group==='sticks')return {roughness:.88,metalness:0,clearcoat:0};
  if(['buttons','dpad'].includes(group))return {roughness:.23,metalness:0,clearcoat:.5};
  if(group==='trim')return {roughness:.22,metalness:.25,clearcoat:.8};
- return {roughness:group==='touchpad'?.4:.32,metalness:.12,clearcoat:.65};
+ return {roughness:group==='touchpad'?.46:.4,metalness:.03,clearcoat:.28};
 }
 function polygon(ctx,points,fill){ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=fill;ctx.fill();}
 function contours(ctx,layers,project,color){
  ctx.fillStyle=color;
  for(const layer of layers){ctx.beginPath();for(const points of layer.paths){
   const p=points.map(project);if(!p.length)continue;const last=p.at(-1);ctx.moveTo((last[0]+p[0][0])/2,(last[1]+p[0][1])/2);
-  p.forEach((q,i)=>{const next=p[(i+1)%p.length];ctx.quadraticCurveTo(q[0],q[1],(q[0]+next[0])/2,(q[1]+next[1])/2);});ctx.closePath();
+  // Preserve the sharp leaf tips and the VI's straight edges.
+  ctx.moveTo(...p[0]);p.slice(1).forEach(q=>ctx.lineTo(...q));ctx.closePath();
  }ctx.fill('evenodd');}
 }
 export function drawGtaArtwork(ctx,id,group,w,h,relief=false,reference=[]) {
