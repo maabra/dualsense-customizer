@@ -310,6 +310,7 @@ export function editionSurface(id,group) {
   if(id==='007'&&['shell','rear'].includes(group))return {roughness:.34,metalness:.72,clearcoat:.18};
   if(id==='yotei-gold')return {roughness:group==='rear'?.72:group==='trim'?.52:.56,metalness:0,clearcoat:.04};
   if(id==='lisa'&&['shell','trim','rear'].includes(group))return {roughness:.13,metalness:.18,clearcoat:1};
+  if(id==='lastofus'&&['shell','trim','rear'].includes(group))return {roughness:.92,metalness:0,clearcoat:0};
   if(id==='monsterhunter'&&['shell','rear'].includes(group))return {roughness:.32,metalness:.45,clearcoat:.4};
   if(id==='genshin')return {roughness:.53,metalness:0,clearcoat:.06};
   if(id==='gow20')return {roughness:.64,metalness:0,clearcoat:.02};

@@ -262,7 +262,12 @@ function createStudio(container, report) {
             diffuseColor.rgb = mix(diffuseColor.rgb, paint * detail, studioBlend);
             vec4 editionArt=texture2D(studioArtwork,vEditionUV);
             editionArt.rgb/=max(editionArt.a,0.0001);
-            float artMask=studioArtworkEnabled*editionArt.a;
+            // Registered print maps describe the visible front plate. Fade
+            // them out as the shell rolls into its side wall so ink and
+            // texture contours stay on the molded face instead of smearing
+            // across the controller edge.
+            float artworkFacing=smoothstep(0.08,0.62,vEditionFacing);
+            float artMask=studioArtworkEnabled*editionArt.a*artworkFacing;
             diffuseColor.rgb=mix(diffuseColor.rgb,editionArt.rgb*(0.9+detail*0.1),artMask);
           `);
           // Explicit data maps keep metallic ink and clearcoat separate from albedo.
@@ -275,7 +280,7 @@ function createStudio(container, report) {
             vec3 editionSurface=surfaceTexel.rgb/max(surfaceTexel.a,0.0001);
             float printedRegion=step(0.45,editionSurface.b);
             float finishFacing=studioArtworkEnabled*editionArt.a;
-            float finishMask=finishFacing*max(studioSurfaceEnabled,printedRegion);
+            float finishMask=finishFacing*artworkFacing*max(studioSurfaceEnabled,printedRegion);
             float printRough=editionSurface.r;
             float printMetal=editionSurface.g;
             if(studioPrintOverride.x>=0.0){
@@ -300,7 +305,7 @@ function createStudio(container, report) {
               vec2 reliefUv=(uv-studioUvBounds.xy)/studioUvBounds.zw;
               vec4 reliefSample=texture2D(studioRelief,reliefUv);
               float reliefHeight=reliefSample.a>0.5?reliefSample.r/reliefSample.a:0.5;
-              transformed+=normal*(reliefHeight-0.5)*studioReliefScale;
+              transformed+=normal*(reliefHeight-0.5)*studioReliefScale*smoothstep(0.08,0.62,vEditionFacing);
             }
           `);
           shader.fragmentShader=`uniform sampler2D studioRelief;uniform float studioReliefScale;
@@ -309,7 +314,7 @@ function createStudio(container, report) {
           shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
             if(studioReliefScale>0.0){
               vec2 uvDx=dFdx(vEditionUV),uvDy=dFdy(vEditionUV);float height=studioHeight(vEditionUV);
-              vec2 dh=vec2(studioHeight(vEditionUV+uvDx)-height,studioHeight(vEditionUV+uvDy)-height)*studioReliefScale;
+              vec2 dh=vec2(studioHeight(vEditionUV+uvDx)-height,studioHeight(vEditionUV+uvDy)-height)*studioReliefScale*smoothstep(0.08,0.62,vEditionFacing);
               // Keep screen-space derivative lengths. Normalizing these vectors
               // erased almost all physical depth from the molded artwork.
               vec3 dx=dFdx(-vViewPosition),dy=dFdy(-vViewPosition);
@@ -378,7 +383,7 @@ function createStudio(container, report) {
       m.userData.artwork.value=artwork||emptyArtwork;m.userData.artworkEnabled.value=artwork?1:0;
       m.userData.surface.value=artwork?.userData.surface||emptyArtwork;
       m.userData.relief.value=artwork?.userData.relief||emptyArtwork;
-      m.userData.reliefScale.value=artwork?.userData.relief?(entry?.id.startsWith('gta')?(group==='touchpad'?.012:.018):(group==='touchpad'?.005:.009)):0;
+      m.userData.reliefScale.value=artwork?.userData.relief?(entry?.id.startsWith('gta')?(group==='touchpad'?.02:.026):(group==='touchpad'?.005:.009)):0;
       m.userData.uvBounds.value.fromArray(artwork?.userData.uvBounds||[0,0,1,1]);
       m.userData.surfaceEnabled.value=artwork&&selection.finish==='original'?1:0;
       m.map = upload || m.userData.originalMap;
@@ -410,11 +415,11 @@ function createStudio(container, report) {
       if(chroma){
         const polished=['shell','rear','trim'].includes(group);
         if(polished){
-          m.roughness=chromaId==='pearl'?.23:.13;m.metalness=chromaId==='pearl'?.03:.4;
-          m.clearcoat=1;m.clearcoatRoughness=.065;
-          m.iridescence=chromaId==='pearl'?.22:.85;
+          m.roughness=chromaId==='pearl'?.38:.13;m.metalness=chromaId==='pearl'?.015:.4;
+          m.clearcoat=chromaId==='pearl'?.48:1;m.clearcoatRoughness=chromaId==='pearl'?.2:.065;
+          m.iridescence=chromaId==='pearl'?.1:.85;
           m.iridescenceIOR=1.35;
-          m.iridescenceThicknessRange={pearl:[240,360],indigo:[320,480],teal:[180,300]}[chromaId];
+          m.iridescenceThicknessRange={pearl:[210,300],indigo:[320,480],teal:[180,300]}[chromaId];
           m.normalScale.multiplyScalar(.3);
         }else{
           m.metalness=0;m.roughness=group==='sticks'?.88:group==='touchpad'?.36:.23;

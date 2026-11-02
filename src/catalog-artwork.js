@@ -17,7 +17,7 @@ export function catalogPartColor(id,group,part) {
  const control=['buttons','dpad','sticks','triggers','trim','ps','create','options','mute'].includes(group);
  if(id==='ff16')return {shell:'#222428',touchpad:'#202226',trim:'#1a1e24',rear:'#202226',buttons:'#15171a',dpad:'#17191c',sticks:'#1d2228',triggers:'#171b20',ps:'#111418',create:'#191c20',options:'#191c20',mute:'#42494f'}[group]||black;
  if(id.startsWith('gta'))return gtaColor(id,group);
- if(id==='lastofus')return ['trim','sticks','triggers'].includes(group)?'#cbd0d7':black;
+ if(id==='lastofus')return group==='ps'?'#edf0f3':['trim','sticks','triggers'].includes(group)?'#cbd0d7':black;
  if(id==='fortnite')return ['buttons','dpad','shell','touchpad'].includes(group)?'#56b9eb':black;
  if(id==='helldivers')return group==='touchpad'?'#2a2d32':['trim','sticks','ps','mute'].includes(group)?'#1c2229':'#24272c';
  if(id==='007')return control&&!['create','options'].includes(group)?black:'#cbb276';
@@ -130,15 +130,24 @@ export function drawTracedArtwork(ctx,id,group,w,h) {
     const xs=points.map(([x])=>x),ys=points.map(([,y])=>y);
     if(Math.max(...xs)-Math.min(...xs)>1.4&&Math.max(...ys)>.5)continue;
    }
-   if(group==='shell'&&['gt','marathon','lisa','yotei-black','yotei-gold','gta-white'].includes(id)&&isFactoryControlContour(points))continue;
-   contour(ctx,points.map(p=>project(registered(p))));
+   if(group==='shell'&&['gt','marathon','lisa','yotei-black','yotei-gold','gta-white','fortnite'].includes(id)&&isFactoryControlContour(points))continue;
+   contour(ctx,points.map(p=>{
+    const q=registered(p);
+    // The Helldivers badge and eagle were traced a hair left of the molded
+    // touchpad center. Recenter only the artwork, leaving the dot field fixed.
+    if(id==='helldivers'&&group==='touchpad')q[0]+=.012;
+    // The Lisa eye illustration has more visual weight on its left half;
+    // offset its registered print slightly so the face sits on the pad center.
+    if(id==='lisa'&&group==='touchpad')q[0]+=.026;
+    return project(q);
+   }));
   }
   ctx.fillStyle=layer.color;ctx.fill('evenodd');
   if(id==='camo'&&layer.color==='#aaa6a7'){
    // The tiny controller symbols belong only to the light camouflage ink.
    // Clip them to the registered contours so they never bleed onto controls.
-   ctx.save();ctx.clip('evenodd');ctx.strokeStyle='#858287';ctx.lineWidth=w*.00065;
-   const step=group==='touchpad'?w*.029:w*.012;
+   ctx.save();ctx.clip('evenodd');ctx.strokeStyle='#858287';ctx.lineWidth=w*.00052;
+   const step=group==='touchpad'?w*.05:w*.022;
    for(let row=0,y=0;y<h;y+=step,row++)for(let col=0,x=-(row%2)*step/2;x<w;x+=step,col++){
     const r=step*.27;ctx.beginPath();
     switch((row+col)%4){
