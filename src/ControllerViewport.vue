@@ -404,7 +404,8 @@ function createStudio(container, report) {
       if(entry?.id.startsWith('gta')&&!upload)m.normalScale.multiplyScalar(.35);
       if(entry?.id==='yotei-gold'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='trim'?.25:.12);
       if(entry?.id==='helldivers'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='trim'?.3:.20);
-      if(entry?.id==='concord'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(.3);
+      if(entry?.id==='concord'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='touchpad'?.12:.22);
+      if(entry?.id==='ff16'&&!upload&&['shell','touchpad','trim'].includes(group))m.normalScale.multiplyScalar(group==='touchpad'?.12:.25);
       if(entry?.id.startsWith('astro')&&!upload&&['shell','touchpad','trim','triggers'].includes(group))m.normalScale.multiplyScalar(group==='touchpad'?.035:.12);
       if(chroma){
         const polished=['shell','rear','trim'].includes(group);

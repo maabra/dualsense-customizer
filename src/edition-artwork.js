@@ -319,7 +319,8 @@ export function editionSurface(id,group) {
   if(group==='touchpad')return {roughness:.56,metalness:0,clearcoat:.08};
   if(id==='concord')return {roughness:.7,metalness:0,clearcoat:.02};
   if(id==='lebron')return {roughness:.68,metalness:0,clearcoat:.03};
-  if(['ff16','hogwarts','deathstranding'].includes(id))return {roughness:.67,metalness:0,clearcoat:.02};
+  if(id==='ff16')return {roughness:group==='touchpad'?.59:group==='triggers'?.38:group==='ps'?.3:['create','options'].includes(group)?.42:.53,metalness:0,clearcoat:.035};
+  if(['hogwarts','deathstranding'].includes(id))return {roughness:.67,metalness:0,clearcoat:.02};
   if(id==='helldivers')return {roughness:group==='rear'?.72:.62,metalness:0,clearcoat:.025};
   if(id.startsWith('yotei'))return {roughness:.7,metalness:0,clearcoat:0};
   if(id==='anniversary')return {roughness:.68,metalness:0,clearcoat:.025};

@@ -65,7 +65,7 @@ Shell and touchpad print are independently registered from the supplied high-res
 
 ## Concord artwork
 
-The geometric front graphics are reconstructed as clean vector curves, ink panels, clipped hatch bands and small printed marks using the front reference. This replaces low-resolution photographic contours and excludes stray background colors. The intentional radar marking beside Triangle is retained; no duplicate hardware rims are printed. The rear uses its separate reference-derived logo. The front normal strength is reduced for a consistent matte substrate.
+The geometric front graphics are reconstructed as clean vector curves, asymmetric ink panels, clipped hatch bands, orbital guides, calibration ticks, locator dots and micro-print using the front reference. The touchpad includes layered red orbits, crossed guides, four-color FTL linework and edge registration marks. The left grip retains the spacecraft silhouette and the right grip retains its instrument markings. This excludes photographic shadows and duplicate hardware rims. The rear uses its separate reference-derived logo. Red and teal inks have separate finish profiles over a low-grain matte graphite substrate.
 
 
 ## Astro Bot Joyful layout
@@ -75,3 +75,7 @@ Joyful uses the reference's individual cyan and dim-blue eye dots, with continuo
 ## 30th Anniversary PS button
 
 The colored emblem uses the supplied model's raised P and S face boundaries in local artwork coordinates, shared by both model qualities. The native UV bake masks out the recessed backing using the button's sloped cap plane. This preserves the black surround and side walls without projecting a second, differently shaped logo onto the button. Reference: https://www.playstation.com/en-pl/30th-anniversary-collection/ .
+
+## Final Fantasy XVI artwork
+
+The front print uses independently registered shell and touchpad vector layers derived from Sony's 7111-by-4000 product plate. Separate gold and blue contours preserve the central rosette, crystal facets, curved grip lattice, beaded rails, and alternating dotted fringe. Only colored printing is extracted; the photograph's black substrate, controls, highlights, and shadows are excluded. The body uses neutral Midnight Black tones with reduced shell normal strength. Metallic gold and satin blue inks have independent finishes over the matte plastic. Reference: https://sonyinteractive.com/jp/press-releases/2023/230427-2/ .

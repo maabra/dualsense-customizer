@@ -23,9 +23,10 @@ export function createSurfaceCanvas(artwork,id,group) {
     else if(yellow){rough=.38;metal=0;coat=.12;ink=1;}
    }else if(['ff16','hogwarts','yotei-gold','genshin'].includes(id)) {
     if(r>.29&&r>b*1.15&&g>b*1.08){
-     const profile={ff16:[.38,.48,.1],hogwarts:[.32,.6,.1],'yotei-gold':[.38,.48,.08],genshin:[.4,.4,.08]}[id];
+     const profile={ff16:[.42,.38,.06],hogwarts:[.32,.6,.1],'yotei-gold':[.38,.48,.08],genshin:[.4,.4,.08]}[id];
      [rough,metal,coat]=profile;ink=1;
     }
+    else if(id==='ff16'&&b>r*1.25&&g>r*1.15&&b>.3){rough=.48;metal=.08;coat=.06;ink=1;}
    }else if(id==='lastofus') {
     if((hi>.18||hi<.12)&&group!=='trim'){rough=.18;metal=0;coat=.4;ink=1;}
    }else if(id==='spiderman') {
@@ -46,7 +47,8 @@ export function createSurfaceCanvas(artwork,id,group) {
    else if(id==='lisa'&&hi<.5){rough=.6;coat=.04;ink=1;}
    else if(id==='lisa'&&hi<.75&&chroma<.12){rough=.4;metal=.45;coat=.08;ink=1;}
    else if(id==='yotei-black'&&hi<.5){rough=.78;coat=0;ink=1;}
-   else if(id==='concord'&&chroma>.15){rough=.46;coat=.08;ink=1;}
+   else if(id==='concord'&&r>g*1.35&&r>b*1.25){rough=.49;coat=.055;ink=1;}
+   else if(id==='concord'&&g>r*1.18&&b>r*1.08){rough=.37;coat=.13;ink=1;}
    else if(id==='lebron'&&(hi>.45||chroma>.2)){rough=.45;coat=.1;ink=1;}
   }
   pixels[i]=Math.round(rough*255);pixels[i+1]=Math.round(metal*255);pixels[i+2]=Math.round((coat*.45+ink*.5)*255);pixels[i+3]=255;

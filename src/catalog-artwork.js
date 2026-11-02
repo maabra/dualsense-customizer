@@ -1,5 +1,4 @@
 import tracesUrl from './catalog-traces.json?url';
-import {drawFf16Artwork} from './ff16-artwork';
 import {drawGtaArtwork,gtaColor,gtaSurface} from './gta-artwork';
 
 export const additionalEditions=new Set(['ff16','hogwarts','lebron','concord','fortnite','helldivers','lastofus','deathstranding','yotei-gold','yotei-black','marathon','007','gta-black','gta-white','lisa','camo','genshin','monsterhunter','gow20','iconblue']);
@@ -16,6 +15,7 @@ export function loadCatalogTraces(){
 const black='#24262c',white='#e8e9e6';
 export function catalogPartColor(id,group,part) {
  const control=['buttons','dpad','sticks','triggers','trim','ps','create','options','mute'].includes(group);
+ if(id==='ff16')return {shell:'#222428',touchpad:'#202226',trim:'#1a1e24',rear:'#202226',buttons:'#15171a',dpad:'#17191c',sticks:'#1d2228',triggers:'#171b20',ps:'#111418',create:'#191c20',options:'#191c20',mute:'#42494f'}[group]||black;
  if(id.startsWith('gta'))return gtaColor(id,group);
  if(id==='lastofus')return ['trim','sticks','triggers'].includes(group)?'#cbd0d7':black;
  if(id==='fortnite')return ['buttons','dpad','shell','touchpad'].includes(group)?'#56b9eb':black;
@@ -219,6 +219,8 @@ function drawConcordArtwork(ctx,group,w,h){
  else{ctx.translate(w/2,h*.65/1.3);ctx.scale(w/2,-h/1.3);}
  const poly=(points,color)=>{ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.fillStyle=color;ctx.fill();};
  const line=(points,color=red,width=.0014)=>path(ctx,points,color,width);
+ const dot=(x,y,r=.002,color=red)=>{ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();};
+ const label=(value,x,y,size=.009,align='left',color=black)=>{ctx.save();ctx.fillStyle=color;ctx.font=`600 ${size}px monospace`;ctx.textAlign=align;ctx.textBaseline='middle';ctx.fillText(value,x,y);ctx.restore();};
  const hatch=(points,color,width=.0012,spacing=.008)=>{
   ctx.save();ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();
   for(let x=-2;x<2;x+=spacing)line([[x,-.8],[x+1,.8]],color,width);
@@ -227,9 +229,11 @@ function drawConcordArtwork(ctx,group,w,h){
  if(group==='touchpad'){
   // Continuous orbital guides, rather than thresholded photograph fragments.
   ctx.strokeStyle=red;ctx.lineWidth=.0011;
-  for(const radius of [.228,.242,.255]){ctx.beginPath();ctx.arc(0,.405,radius,.02,Math.PI-.02);ctx.stroke();}
+  for(const radius of [.205,.228,.242,.255]){ctx.beginPath();ctx.arc(0,.405,radius,.02,Math.PI-.02);ctx.stroke();}
+  for(const radius of [.11,.137]){ctx.beginPath();ctx.arc(0,.405,radius,0,Math.PI*2);ctx.stroke();}
   line([[-.39,.57],[.34,.30]],red,.001);
   line([[.39,.57],[-.34,.30]],red,.001);
+  line([[-.34,.622],[-.11,.265]],red,.0008);line([[.34,.622],[.11,.265]],red,.0008);
   for(const side of [-1,1]){
    ctx.save();ctx.scale(side,1);
    ctx.strokeStyle=teal;ctx.lineWidth=.018;ctx.beginPath();ctx.moveTo(.022,.508);ctx.bezierCurveTo(.142,.508,.184,.479,.184,.412);ctx.bezierCurveTo(.184,.351,.233,.342,.292,.342);ctx.lineTo(.403,.342);ctx.stroke();
@@ -239,9 +243,13 @@ function drawConcordArtwork(ctx,group,w,h){
    line([[.043,.642],[.054,.347],[.405,.297]],red,.002);
    ctx.restore();
   }
-  for(const [x,y]of [[-.34,.49],[-.30,.56],[-.27,.43],[-.21,.59],[-.14,.57],[.17,.55],[.28,.48],[.32,.58],[.36,.45]]){
-   ctx.fillStyle=red;ctx.beginPath();ctx.arc(x,y,.0024,0,Math.PI*2);ctx.fill();
+  for(const [x,y,r]of [[-.34,.49,.003],[-.30,.56,.002],[-.27,.43,.002],[-.21,.59,.002],[-.14,.57,.0015],[.17,.55,.002],[.28,.48,.003],[.32,.58,.002],[.36,.45,.002],[-.37,.37,.0015],[.37,.37,.0015],[-.25,.33,.0012],[.25,.33,.0012]])dot(x,y,r);
+  // Fine calibration ticks and registration marks visible on the retail pad.
+  for(const side of [-1,1])for(let i=0;i<9;i++){
+   const y=.592-i*.021,x=side*(.372-i*.004);
+   line([[x,y],[x-side*(.012+(i%3)*.004),y]],red,.00075);
   }
+  label('FTL // NAV',-.378,.615,.006,'left',red);label('03.14',.377,.615,.006,'right',red);
  }else{
   // Intentional radar marks near Triangle remain. No printed button rims.
   ctx.strokeStyle=red;ctx.lineWidth=.0012;
@@ -249,6 +257,13 @@ function drawConcordArtwork(ctx,group,w,h){
   for(let i=0;i<8;i++){const a=-.5+i*.32;line([[.623+Math.cos(a)*.105,.423+Math.sin(a)*.105],[.623+Math.cos(a)*.113,.423+Math.sin(a)*.113]],red,.0013);}
   line([[-.88,.54],[-.91,.34]],red,.0012);line([[.88,.54],[.91,.34]],red,.0012);
   line([[-.51,.55],[-.55,.47]],red,.0018);line([[.51,.55],[.55,.47]],red,.0018);
+  // Upper-shell orbital tracks, locator dots and engineering ticks.
+  for(const side of [-1,1]){
+   ctx.strokeStyle=red;ctx.lineWidth=.00085;
+   for(const radius of [.095,.112,.129]){ctx.beginPath();ctx.arc(side*.625,.43,radius,side<0?-1.2:-.15,side<0?.6:1.95);ctx.stroke();}
+   for(let i=0;i<7;i++){const y=.535-i*.022,x=side*(.91-i*.006);line([[x,y],[x-side*(.018+(i%2)*.01),y]],red,.0008);}
+   for(const [x,y,r] of [[.84,.52,.002],[.79,.46,.003],[.91,.40,.0015],[.72,.55,.0015],[.68,.48,.002]])dot(side*x,y,r,red);
+  }
   hatch([[-.95,.19],[-.74,.225],[-.74,.185],[-.956,.145]],teal,.0024,.009);
   hatch([[-.90,.303],[-.855,.303],[-.855,.285],[-.90,.285]],teal,.0024,.009);
   hatch([[-.535,.303],[-.49,.303],[-.49,.285],[-.535,.285]],teal,.0024,.009);
@@ -261,10 +276,19 @@ function drawConcordArtwork(ctx,group,w,h){
   poly([[.458,.183],[.535,.163],[.529,.077]],red);
   poly([[-.956,.076],[-.548,.113],[-.643,-.092],[-.956,-.236]],red);
   poly([[.552,.107],[.94,.045],[.953,-.237],[.68,-.07]],red);
+  // Panel seams and the reference's asymmetrical inset cuts.
+  line([[-.953,.071],[-.552,.108],[-.645,-.087],[-.952,-.229]],'#762f31',.0012);
+  line([[.556,.102],[.935,.040],[.948,-.228],[.683,-.064]],'#762f31',.0012);
+  poly([[.476,.178],[.535,.164],[.527,.082],[.494,.105]],red);
+  hatch([[-.956,.126],[-.746,.17],[-.752,.139],[-.96,.092]],teal,.0022,.008);
   hatch([[-.95,-.294],[-.68,-.155],[-.835,-.58],[-.91,-.54]],red,.0011,.007);
   hatch([[.95,-.294],[.68,-.155],[.835,-.58],[.91,-.54]],red,.0011,.007);
+  // Left grip spacecraft: fuselage, swept wings, tail and fine antennae.
   ctx.save();ctx.translate(-.798,-.08);ctx.rotate(.55);
-  poly([[-.095,0],[-.025,.006],[-.008,.049],[.014,.023],[.045,.012],[.085,0],[.035,-.009],[.01,-.047],[-.005,-.018],[-.04,-.012]],black);ctx.restore();
+  poly([[-.118,-.006],[-.038,-.014],[-.013,-.050],[.005,-.019],[.082,-.006],[.101,0],[.081,.006],[.005,.019],[-.013,.050],[-.038,.014]],black);
+  poly([[-.054,-.010],[-.029,-.035],[-.020,-.012],[.020,-.005],[.020,.005],[-.020,.012],[-.029,.035],[-.054,.010]],black);
+  line([[-.118,0],[-.151,0]],black,.002);line([[-.090,-.004],[-.099,-.030]],black,.0014);line([[-.090,.004],[-.099,.030]],black,.0014);
+  line([[-.005,0],[.086,0]],red,.0011);dot(.071,0,.003,red);ctx.restore();
   for(const [x,y,r]of [[.731,-.07,.011],[-.68,.057,.007],[-.934,-.174,.006]]){
    ctx.fillStyle=black;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
    ctx.strokeStyle=black;ctx.lineWidth=.0012;ctx.beginPath();ctx.arc(x,y,r+.006,0,Math.PI*2);ctx.stroke();
@@ -272,6 +296,14 @@ function drawConcordArtwork(ctx,group,w,h){
   for(const side of [-1,1])for(const [x,y]of [[.85,.015],[.89,-.04],[.80,.03],[.88,-.15],[.75,.53],[.82,.48]]){
    ctx.fillStyle=y>.3?red:black;ctx.beginPath();ctx.arc(side*x,y,.0018,0,Math.PI*2);ctx.fill();
   }
+  // Dense micro-print, calibration circles and scattered rivet-like ink.
+  label('O  //C-4488',-.785,.015,.008);label('CTRL  NAV  06',-.915,-.155,.006);
+  label('PROTO 7-17',.745,-.075,.007);label('11-479  0-0',.745,-.092,.006);
+  label('CONCORD // FTL',.55,.405,.006,'left',red);label('GAL GUIDE',-.93,.30,.006,'left',teal);
+  for(const [x,y,r]of [[-.91,-.17,.004],[-.68,.06,.005],[-.58,-.18,.002],[.73,-.07,.009],[.80,-.14,.002],[.91,-.18,.002],[-.75,-.25,.0015],[.70,-.24,.0015]]){
+   dot(x,y,r,black);ctx.strokeStyle=black;ctx.lineWidth=.001;ctx.beginPath();ctx.arc(x,y,r+.006,0,Math.PI*2);ctx.stroke();
+  }
+  for(const side of [-1,1])for(let i=0;i<11;i++)dot(side*(.58+i*.031),-.18-(i%4)*.034,.0012+(i%3)*.0004,i%4===0?red:black);
  }
  ctx.restore();
  if(group==='shell'){
@@ -285,7 +317,6 @@ export function drawCatalogArtwork(ctx,id,group,w,h) {
  if(id==='concord'){drawConcordArtwork(ctx,group,w,h);return;}
  if(id==='helldivers'&&group==='touchpad')drawHelldiversPad(ctx,w,h);
  if(id==='007'){if(group==='rear')drawTracedArtwork(ctx,id,group,w,h);else draw007Artwork(ctx,group,w,h);return;}
- if(id==='ff16'&&['shell','touchpad'].includes(group)){drawFf16Artwork(ctx,group,w,h);return;}
  if(id.startsWith('gta')){
   drawGtaArtwork(ctx,id,group,w,h,false,traces[group==='rear'?'gta-rear-logo':'gta-relief']);return;
  }

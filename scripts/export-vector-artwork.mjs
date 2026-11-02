@@ -10,11 +10,10 @@ const traces=JSON.parse(await read('src/catalog-traces.json'));
 const referenceTraces=JSON.parse(await read('src/reference-traces.json'));
 const document={createElement:()=>new VectorCanvas()};
 const gta=new Function(moduleBody(await read('src/gta-artwork.js'))+';return {drawGtaArtwork,gtaColor,gtaSurface};')();
-const ff16=new Function(moduleBody(await read('src/ff16-artwork.js'))+';return drawFf16Artwork;')();
 const catalogSource=await read('src/catalog-artwork.js');
 const catalogModule=catalogSource.replace('let traces={},tracesLoaded=false,tracesPromise;','let traces=__catalogTraces,tracesLoaded=true,tracesPromise;');
 if(catalogModule===catalogSource)throw new Error('Could not initialize catalog artwork traces for the build export');
-const catalog=new Function('__catalogTraces',...Object.keys(gta),'drawFf16Artwork','document',moduleBody(catalogModule)+';return {additionalEditions,catalogPartColor,drawCatalogArtwork,drawTracedArtwork,catalogEditionSurface,createEditionReliefCanvas};')(traces,...Object.values(gta),ff16,document);
+const catalog=new Function('__catalogTraces',...Object.keys(gta),'document',moduleBody(catalogModule)+';return {additionalEditions,catalogPartColor,drawCatalogArtwork,drawTracedArtwork,catalogEditionSurface,createEditionReliefCanvas};')(traces,...Object.values(gta),document);
 for(const key of [...catalog.additionalEditions,'gt','godofwar','spiderman','gta-relief','gta-rear-logo','godofwar-rear','concord-rear','lebron-pad','yotei-gold-rear']){
  const layers=traces[key]?.source?traces[traces[key].source]:traces[key];
  if(!layers?.some(layer=>layer.paths.length))throw new Error(`Missing reference vector layer: ${key}`);

@@ -45,7 +45,7 @@ export const catalog = [
   edition('astro-joyful', 'Astro Bot · Joyful', '#eef0f6', '#0953cf', 'satin'),
   edition('spiderman', 'Marvel’s Spider-Man 2', '#b42832', '#202126'),
   edition('godofwar', 'God of War Ragnarök', '#c7cdd2', '#344d69'),
-  edition('ff16', 'Final Fantasy XVI', '#272b35', '#a8a49b'),
+  edition('ff16', 'Final Fantasy XVI', '#222428', '#ae8e6d', 'matte'),
   edition('hogwarts', 'Hogwarts Legacy', '#29252b', '#a88a4b'),
   edition('lebron', 'LeBron James', '#26252c', '#d6ae38'),
   edition('concord', 'Concord', '#24262c', '#c4483e', 'matte'),
